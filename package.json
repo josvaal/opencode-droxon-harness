@@ -1,0 +1,36 @@
+{
+  "name": "opencode-droxon-harness",
+  "version": "1.0.0",
+  "description": "Droxon harness for OpenCode: one orchestrator agent that runs the SDD pipeline, /feature workflow, spec-kit fusion, YATT E2E verification and the fastloop completion gate. GLM-family friendly.",
+  "type": "module",
+  "main": "plugin/droxon-harness.ts",
+  "files": [
+    "plugin/",
+    "agent/",
+    "command/",
+    "tui/",
+    "docs/",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "opencode",
+    "opencode-plugin",
+    "opencode-agent",
+    "agent",
+    "harness",
+    "sdd",
+    "spec-kit",
+    "yatt",
+    "fastloop",
+    "glm"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/josvaal/opencode-droxon-harness.git"
+  },
+  "homepage": "https://github.com/josvaal/opencode-droxon-harness#readme",
+  "bugs": "https://github.com/josvaal/opencode-droxon-harness/issues",
+  "author": "josvaal",
+  "license": "MIT"
+}
