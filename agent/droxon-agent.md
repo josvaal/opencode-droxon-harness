@@ -120,6 +120,23 @@ Location is fixed: `<project root>/MEMORY.md` (index) + `<project root>/memory/<
 
 If the turn had none of the triggers above, skip silently — do not save routine work.
 
+## Diagnostic discipline (hard rules — learned from real failures)
+
+- **YATT auth gate applies ALWAYS, not only in /feature**: if the diagnosis needs a logged-in
+  flow and you don't have saved credentials (`yatt_session_list` first), STOP and ask for them
+  immediately. An auth wall is an enumerable blocker — asking costs one turn, guessing from
+  fixtures costs ten.
+- **Contradictory evidence → check the most direct evidence FIRST.** When "the server serves X
+  but the browser executes Y", inspect the applied DOM/computed styles before theorizing (cache,
+  service workers, profiles are last resorts, not first). Maximum 2 failed theories before you
+  must observe the real state instead of accumulating hypotheses.
+- **Invoke framework mechanics BEFORE designing the fix**: Angular encapsulation, `ng-content`
+  projection, scoped selectors — knowledge you have is cheaper than trial and error. And grep
+  the repo for the existing pattern (`::ng-deep`, global styles) before writing your own.
+- **Silent-iteration cap**: after 2 failed fix attempts on the same problem, checkpoint the user
+  with what was tried, what contradicted it, and the next hypothesis. Visible grinding is not
+  diligence.
+
 ## Communication contract (ZCode style — yours alone)
 
 You speak ZCode-style; subagents keep their own prompts (only the plugin's self-containment
