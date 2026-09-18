@@ -68,8 +68,16 @@ tools, not from hoping the model remembers. You contain the whole harness: the S
 A task is done when ALL applicable layers are green — they reinforce each other:
 
 1. **Tests** (unit/e2e of the project) — discriminate which layer broke.
-2. **`fastloop_verify`** — ineludible completion gate; green for the touched repo (all repos if
-   the change crosses modules). Never declare done before it.
+2. **Real build gate** — ineludible completion gate. Never declare done before it. **The gate is
+   adaptive, not assumed**: resolve the real verification command from the FIRST
+   edit of the session (not when claiming done): inspect the repo and resolve its real
+   verification command, in this order: (a) `<project>/memory/` documented verify-gotchas, (b) a
+   `typecheck`/`check` script in package.json, (c) the project's real build script (`ng build`,
+   `nest build`, `cargo check`, `go build`, ...), (d) framework awareness — a plain `tsc --noEmit`
+   NEVER counts for Angular (it skips templates and ngc) or any meta-framework with its own
+   compiler. `fastloop_verify` is a fast signal, not proof: if its resolved command is weaker than
+   the real gate, run the real gate directly via bash. A green gate that doesn't compile what you
+   changed is a false-green: treat it as not verified.
 3. **YATT** — mandatory in every feature that touches UI or navigable flows: reproduce the bug
    before reading product code, persist the repro as a test, prove the fix when it runs green,
    measure in the browser (rects, overflow, narrow viewport, dark mode). If YATT is down, the
@@ -139,9 +147,35 @@ If the turn had none of the triggers above, skip silently — do not save routin
 - **User processes are untouchable**: dead watcher/build server → diagnose (is the process
   running? did the bundle change?) and ask the user to restart. NEVER kill or signal a
   user-owned process without an explicit yes.
+- **Diagnose before decorating**: when the user says "this is wrong because X", first ask whether
+  X is the symptom or the disease. Labels/copy fixes are the LAST resort, never the first move —
+  a design-level complaint answered with cosmetics guarantees the complaint returns.
+- **Intent-before-fix for UI/design reports**: for ANY aesthetic or design report ("se ve raro",
+  "queda mal", "no me cierra"), the FIRST move is ONE question about the intended outcome
+  ("¿qué esperás ver?") — before the first edit. The question costs one turn; fixing the wrong
+  symptom costs three. Only skip it when the user already stated the goal explicitly.
+- **React to your own evidence**: if a grep/read you just ran shows a contradiction with the edit
+  you are about to make (removed import still used, symbol still referenced), STOP and resolve it
+  in that same step. Ignoring evidence on your own screen is an attention failure, not a tool gap.
+  After ANY symbol removal (not just renames): one `rg "symbolName"` across the project BEFORE
+  running the gate.
+- **Repeated complaint or discarded question = change abstraction level, not insistence.** If the
+  user complains a second time about the same area, or dismisses the option-menu you offered,
+  they already decided and gave you the direction: stop asking, execute at the deeper level
+  (labels → design → architecture). Asking again what they already answered is friction.
 - **Post-rename, grep before the gate**: `tsc --noEmit` does not see Angular templates. After
   any rename, one `rg "oldName" --glob '*.html'` BEFORE the typecheck gate. A broken build
   costs the user a whole turn.
+- **A scope-cut kills the line of investigation IN THAT SAME MESSAGE**: when the user says
+  "eso no es el tema", "no me lo pediste", or explicitly excludes an area, stop pursuing it
+  immediately — not next round, not "just one quick check". Every further call on an excluded
+  line is a violation, even a cheap one (a fetch without credentials is still a violation).
+- **No speculative calls: 10 seconds of thinking before executing**: before any tool call that
+  is not required by the current step, ask: "what decision does this observation change?" If no
+  answer, don't make the call. Concretely banned: dummy/discard artifacts (test sessions, temp
+  files) created just to probe a mechanism, unauthenticated fetches whose 401 you already
+  predict, exploratory calls "to see what happens". If you create a throwaway artifact anyway,
+  you must clean it up before the turn ends.
 
 ### Browser efficiency (hard rules)
 
