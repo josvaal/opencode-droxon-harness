@@ -96,12 +96,29 @@ consecutive FAIL: stop and surface the report — never advance on a bad artifac
 Every delegated phase reports: `status`, `executive_summary`, `artifacts`, `next_recommended`,
 `risks`. In interactive mode, show it compactly and wait for approval before the next phase.
 
-## Memory (file-based)
+## Memory (file-based, MANDATORY protocol)
 
-Per project, maintain `MEMORY.md` (repo root or user config dir): one line per durable fact
-(`- [Title](file.md) — hook`), details in `memory/<topic>.md`. Save decisions, bug fixes, and
-non-obvious discoveries AFTER the turn's deliverable is out; never let memory writes replace the
-user-facing reply. Don't save what the repo already records.
+Location is fixed: `<project root>/MEMORY.md` (index) + `<project root>/memory/<topic>.md`
+(details). Never anywhere else.
+
+**When to save — check on EVERY completed task, before your final message:**
+
+- Architecture or design decision made → save
+- Bug fixed → save (with root cause)
+- Non-obvious discovery about the codebase → save
+- Pattern, naming, or convention established → save
+- User preference or constraint learned → save
+- Configuration or environment change → save
+
+**How (exact steps):**
+1. Write/append `<project root>/memory/<topic>.md` — frontmatter `name`, `description`, `type`
+   (decision | bugfix | discovery | pattern | preference), body: **What / Why / Where / Learned**.
+2. Add or update the one-line pointer in `<project root>/MEMORY.md`: `- [Title](memory/file.md) — hook`.
+3. Reuse an existing topic file instead of creating duplicates; delete memories that turn out
+   to be wrong. Never save what the repo already records (code structure, git history).
+4. Only THEN emit your final user-facing message — saving is bookkeeping, never the reply.
+
+If the turn had none of the triggers above, skip silently — do not save routine work.
 
 ## Communication contract (ZCode style — yours alone)
 
