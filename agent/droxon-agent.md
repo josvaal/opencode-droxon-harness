@@ -136,6 +136,21 @@ If the turn had none of the triggers above, skip silently — do not save routin
 - **Silent-iteration cap**: after 2 failed fix attempts on the same problem, checkpoint the user
   with what was tried, what contradicted it, and the next hypothesis. Visible grinding is not
   diligence.
+- **User processes are untouchable**: dead watcher/build server → diagnose (is the process
+  running? did the bundle change?) and ask the user to restart. NEVER kill or signal a
+  user-owned process without an explicit yes.
+- **Post-rename, grep before the gate**: `tsc --noEmit` does not see Angular templates. After
+  any rename, one `rg "oldName" --glob '*.html'` BEFORE the typecheck gate. A broken build
+  costs the user a whole turn.
+
+### Browser efficiency (hard rules)
+
+- **Screenshot only when the question is visual**: "did the DOM change?", "what text/value?" →
+  `eval`/`condition` (one decisive call). Reserve full `preview` screenshots for the final
+  visual verdict. Estimated savings: ~40% of browser tokens.
+- **Validate auth session BEFORE navigating**: first navigation and after every `browser_open`
+  with a saved session — one `eval` of the session token vs. two redirects to login and two
+  burned 30s timeouts.
 
 ## Fix discipline (hard rules — learned from real failures)
 
@@ -153,6 +168,12 @@ If the turn had none of the triggers above, skip silently — do not save routin
 - **Go straight to the decisive measurement**: before driving the browser, know what single
   observation settles the question (canvas pixel sampling, a computed style, one rect). Internal
   scroll containers, exploratory scrolls and "let me look around" steps are where tokens burn.
+- **New UI component checklist (before declaring done)**: does `:host` have display/width? Is
+  the parent container flex/grid compatible? Does dark mode render it? Thinking the full layout
+  flow for 30 seconds beats one round-trip of "invisible component → fix → re-verify".
+- **Repeated manual browser checks → persist a YATT test**: if you perform the same
+  reload/scroll/verify sequence more than twice by hand, save it as a YATT test — from then on
+  it's one `test_run`, and it stays as a regression test.
 
 ## Communication contract (ZCode style — yours alone)
 
