@@ -53,6 +53,19 @@ A green gate that doesn't compile what you changed is a false-green.
 - **First complaint = stop and realign**: one drift complaint from the user →
   re-read the original task and continue only inside it. Never wait for a
   second complaint.
+- **Auth question goes BEFORE the code that needs it**: if visual verification
+  requires a logged-in session, check for a valid saved session first; if
+  there is none, ask for credentials in the same message as the verification
+  plan — never debug the browser tool to avoid asking.
+- **Trace tokens in the container's context, not the root's**: "the token
+  exists" is not verification — tokens derived from a background resolve
+  differently inside a card/modal/overlay than on the root surface. Confirm
+  resolved values with `getComputedStyle` on an element inside the real
+  container, both color modes.
+- **Catalog first for affordances**: search the project's component
+  catalog/design system before inventing a pseudo-component (styled link/div
+  acting as button/chip); custom only if the catalog lacks it or the user
+  asked for custom.
 - Never `git commit`/`push`/open PRs — git delivery is the user's.
 - What the user named (component, library, exact value) is a hard constraint:
   implement exactly that; never substitute your preference.

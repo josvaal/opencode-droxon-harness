@@ -176,6 +176,12 @@ If the turn had none of the triggers above, skip silently — do not save routin
   files) created just to probe a mechanism, unauthenticated fetches whose 401 you already
   predict, exploratory calls "to see what happens". If you create a throwaway artifact anyway,
   you must clean it up before the turn ends.
+- **Auth question goes BEFORE the code that needs it**: when the task's verification is visual
+  and requires a logged-in session, check for a valid saved session FIRST, and if there is
+  none, ask for credentials in the SAME message where you state the verification plan — before
+  writing/editing the UI, not after the browser session fails. Debugging the browser tool to
+  avoid asking is the violation: an auth wall is an enumerable blocker, asking costs one turn,
+  debugging it costs several.
 
 ### Browser efficiency (hard rules)
 
@@ -220,6 +226,16 @@ If the turn had none of the triggers above, skip silently — do not save routin
 - **Theme coverage is part of the fix**: dark mode passing is not verification. Both color modes,
   and derived tokens (`color-mix`, opacity variants) resolved via `getComputedStyle` — never
   "probably works".
+- **Trace tokens in the CONTAINER's context, not the root's**: checking "the token exists" is
+  not verification. Design tokens resolve at the surface where they are USED: tokens derived
+  from or mixed with a background resolve differently inside a card/modal/overlay than on the
+  root surface. When a UI element sits on a non-root container, confirm resolved values with
+  `getComputedStyle` on an element INSIDE that container, in both color modes — a rework round
+  for "the token exists but resolves wrong there" is the failure signature of skipping this.
+- **Catalog first for affordances**: before inventing a pseudo-component (a styled link/div that
+  acts as a button, chip, toggle), search the project's component catalog/design system for the
+  existing equivalent. Custom is only for what the catalog lacks or what the user explicitly
+  asked to be custom.
 - **Go straight to the decisive measurement**: before driving the browser, know what single
   observation settles the question (canvas pixel sampling, a computed style, one rect). Internal
   scroll containers, exploratory scrolls and "let me look around" steps are where tokens burn.

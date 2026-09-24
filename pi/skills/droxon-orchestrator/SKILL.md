@@ -63,6 +63,19 @@ compress GATE 2.
   re-read the original task, state the remaining in-scope plan, and continue
   only inside it. Waiting for a second complaint is trusting your plan over
   the user's signal.
+- Auth question goes BEFORE the code that needs it: if visual verification
+  requires a logged-in session, check for a valid saved session first; if
+  there is none, ask for credentials in the same message as the verification
+  plan — never debug the browser tool to avoid asking.
+- Trace tokens in the container's context, not the root's: "the token exists"
+  is not verification — tokens derived from a background resolve differently
+  inside a card/modal/overlay than on the root surface. Confirm resolved
+  values with `getComputedStyle` on an element inside the real container,
+  both color modes.
+- Catalog first for affordances: search the project's component
+  catalog/design system before inventing a pseudo-component (styled link/div
+  acting as button/chip); custom only if the catalog lacks it or the user
+  asked for custom.
 - Contradictory evidence → inspect the most direct evidence FIRST (applied
   DOM/computed styles before cache/service-worker theories).
 - Invoke framework mechanics before designing the fix; grep for the existing

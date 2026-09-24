@@ -75,3 +75,29 @@ YATT tests) for a page redesign.
 ("to verify I need login → backend → DB"), where every step looks locally reasonable. Rules must
 name that exact chain and bind at the FIRST link. Also: drift-detection cannot rely on the
 agent's self-policing alone — the user's first complaint must trigger a mandatory realign step.
+
+## Fourth retro (gym modal-redesign session) — superficial token trace, late auth ask, invented affordance
+
+**What**: Added three verification/design hard rules to `agent/droxon-agent.md` (Diagnostic +
+Fix discipline), mirrored in `pi/agents-block.md` and `pi/skills/droxon-orchestrator/SKILL.md`.
+
+**Why**: Session self-retro reported: (1) verified design tokens EXIST but not how they RESOLVE
+on the modal's surface — background-derived/mixed tokens broke inside the container; cost one
+rework round. (2) Visual verification required a logged-in session; the agent debugged the
+browser tool when the session failed instead of asking for credentials immediately — the ask
+belonged in the first message touching verification, before the UI work. (3) Invented a
+pseudo-button component although the catalog had one; corrected only after user feedback.
+
+**Rules added (generalized — must apply to ANY project, no project-specific token/component names)**:
+- Auth question goes BEFORE the code that needs it: check saved sessions first; no valid one →
+  ask in the same message as the verification plan; debugging the browser to avoid asking is the
+  violation. (Tightens the existing YATT auth gate with a temporal bound: before the UI work.)
+- Trace tokens in the container's context, not the root's: "the token exists" ≠ verification;
+  getComputedStyle on an element INSIDE the real container, both color modes.
+- Catalog first for affordances: search the project's design system before inventing
+  pseudo-components; custom only if the catalog lacks it or the user asked.
+
+**Learned**: Retro rules must be written generalized from the start. First draft embedded the
+project's own token/component names (`--bg-card-100`, `app-button`, `modules-shared/ui`) — the
+user stopped it: harness rules are cross-project; the project specifics stay in project memory
+(e.g. the codicore-design skill), the harness carries only the transferable principle.
