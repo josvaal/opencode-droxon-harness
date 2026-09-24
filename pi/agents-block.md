@@ -43,6 +43,16 @@ A green gate that doesn't compile what you changed is a false-green.
 - Reproduce UI bugs in a real browser BEFORE reading product code.
 - Post-rename: grep templates before the gate (`tsc --noEmit` skips templates).
 - After 2 failed fix attempts on the same problem: stop and checkpoint the user.
+- **Task-type scoping binds verification**: on a scope-limited task (e.g.
+  frontend/UI), verification steps of another type (backend startup, `.env`,
+  DB, login credentials) are OUT of scope. If verification needs them, stop and
+  checkpoint the user with options — never escalate solo into another stack.
+- **Pre-step scope filter**: before each step, "¿está dentro de la tarea
+  declarada?" Reading routes/guards/env/tests beyond the touched component is
+  drift, not diligence.
+- **First complaint = stop and realign**: one drift complaint from the user →
+  re-read the original task and continue only inside it. Never wait for a
+  second complaint.
 - Never `git commit`/`push`/open PRs — git delivery is the user's.
 - What the user named (component, library, exact value) is a hard constraint:
   implement exactly that; never substitute your preference.

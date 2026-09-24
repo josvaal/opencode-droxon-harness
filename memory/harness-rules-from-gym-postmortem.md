@@ -52,3 +52,26 @@ late — gate must be resolved from the FIRST edit, not at claim-of-done time; (
 fixes needed teeth ("same message", "first edit", "one question BEFORE the first edit"), not just
 statements of principle. Retro-driven harness iteration works: keep promoting each session's
 failure classes into explicit, temporally-bounded rules.
+
+## Third retro (gym UI-redesign session) — scope drift during verification
+
+**What**: Added a new "Scope discipline" hard-rule block to `agent/droxon-agent.md`, and the
+matching rules to `pi/agents-block.md` + `pi/skills/droxon-orchestrator/SKILL.md`.
+
+**Why**: On a 100% frontend/UI task the agent escalated solo into infrastructure to enable
+visual verification: started a NestJS backend, read `.env`, touched DB MySQL and login
+credentials — 4 out-of-scope steps. The user had to complain twice ("te desvías DEMASIADO")
+before the drift was cut. Related failure: excessive pre-exploration (routes, guards, env vars,
+YATT tests) for a page redesign.
+
+**Rules added (teeth, not principles)**:
+- Task-type scoping binds verification: verification steps of another type than the task's
+  declared type are OUT of scope even when they only serve verification.
+- Verification-blocked → checkpoint the user with options; never escalate solo into another stack.
+- Pre-step scope filter: "¿este paso está dentro de la tarea declarada?" — exploration counts.
+- First complaint = stop and realign (re-read original task); never wait for a second complaint.
+
+**Learned**: Scope drift has a distinctive signature: it enters through the verification path
+("to verify I need login → backend → DB"), where every step looks locally reasonable. Rules must
+name that exact chain and bind at the FIRST link. Also: drift-detection cannot rely on the
+agent's self-policing alone — the user's first complaint must trigger a mandatory realign step.

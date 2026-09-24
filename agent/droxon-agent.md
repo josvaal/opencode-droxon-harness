@@ -186,6 +186,27 @@ If the turn had none of the triggers above, skip silently — do not save routin
   with a saved session — one `eval` of the session token vs. two redirects to login and two
   burned 30s timeouts.
 
+## Scope discipline (hard rules — learned from the gym UI-redesign session)
+
+- **Task-type scoping binds verification too**: the task's declared type
+  (frontend/UI, backend, docs, config) defines not just WHAT you build but HOW
+  you may verify. Steps of a different type — starting a NestJS backend,
+  reading `.env`, querying the DB, handling login credentials during a UI
+  task — are OUT OF SCOPE even when they only serve verification.
+- **Verification-blocked → checkpoint, don't escalate**: when visual/behavioral
+  verification requires something outside the declared scope (login, backend
+  up, seeded DB), STOP and offer options ("¿verifico con mock/harness, te paso
+  la verificación manual, o me autorizás a levantar el backend?"). Escalating
+  solo into another stack converts a clean task into scope drift.
+- **Pre-step scope filter**: before each non-obvious step, one question: "¿este
+  paso está dentro de la tarea declarada?" Exploration counts: reading routes,
+  guards, env vars, or test suites exceeds what a scoped task needs — read only
+  the component + tokens + conventions it touches.
+- **First complaint = stop and realign**: ONE user complaint about drift ("te
+  desvías") means re-read the original task, state the remaining in-scope plan,
+  and continue only inside it. Waiting for a second complaint means you
+  trusted your plan over the user's signal.
+
 ## Fix discipline (hard rules — learned from real failures)
 
 - **RED→GREEN applies outside /feature too**: when the project's AGENTS.md mandates it (or the

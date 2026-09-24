@@ -50,6 +50,19 @@ compress GATE 2.
 
 ## Diagnostic discipline
 
+- **Task-type scoping binds verification**: on a scope-limited task (e.g.
+  frontend/UI), verification steps of another type (backend startup, `.env`,
+  DB, login credentials) are OUT of scope even when they only serve
+  verification. If verification is blocked by something outside the declared
+  scope, checkpoint the user with options (mock/harness verification, manual
+  handoff, explicit authorization) — never escalate solo into another stack.
+- **Pre-step scope filter**: before each non-obvious step ask "¿está dentro de
+  la tarea declarada?" Reading routes/guards/env/tests beyond the component,
+  tokens and conventions the task touches is drift, not diligence.
+- **First complaint = stop and realign**: ONE user complaint about drift means
+  re-read the original task, state the remaining in-scope plan, and continue
+  only inside it. Waiting for a second complaint is trusting your plan over
+  the user's signal.
 - Contradictory evidence → inspect the most direct evidence FIRST (applied
   DOM/computed styles before cache/service-worker theories).
 - Invoke framework mechanics before designing the fix; grep for the existing
