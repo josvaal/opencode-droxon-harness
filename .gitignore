@@ -4,3 +4,4 @@ node_modules/
 *.bak
 *.bak-*
 .opencode/
+features/*/research/sources/qwen-tree.json

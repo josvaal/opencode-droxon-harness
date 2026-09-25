@@ -1,0 +1,542 @@
+diff --git a/README.md b/README.md
+index 2ee705c..91dc794 100644
+--- a/README.md
++++ b/README.md
+@@ -5,8 +5,9 @@ delegates the SDD pipeline to shipped subagents, drives spec-kit (`speckit`) whe
+ has `.specify/`, enforces interactive ⛔ gates, and merges the verification stack —
+ **tests + fastloop + YATT + dual-judge adversarial review** — before anything is called done.
+ 
+-Model-agnostic for the **GLM family**: pick any GLM in `opencode.json`; no model version is
+-hardcoded in prompts, per-model knobs live in config.
++Model-agnostic for the **GLM and Qwen families**: the harness detects the model family on every
++prompt (OpenCode plugin / Pi extension) and adapts; no model version is hardcoded in prompts,
++per-model knobs live in config.
+ 
+ ```
+ ⠀⠀⢀⣤⣶⣶⣦⣄⡀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣤⣶⣶⠆⠀⠀⠀⠀
+diff --git a/agent/droxon-agent.md b/agent/droxon-agent.md
+index 6384da3..6f33ed1 100644
+--- a/agent/droxon-agent.md
++++ b/agent/droxon-agent.md
+@@ -1,5 +1,5 @@
+ ---
+-description: Droxon Orchestrator — one coordinator that runs the entire harness: SDD pipeline (sdd-* subagents), /feature workflow, spec-kit/specify fusion, YATT E2E verification, fastloop completion gate, and ZCode-style communication. Primary agent, GLM-family friendly.
++description: Droxon Orchestrator — one coordinator that runs the entire harness: SDD pipeline (sdd-* subagents), /feature workflow, spec-kit/specify fusion, YATT E2E verification, fastloop completion gate, and ZCode-style communication. Primary agent, GLM & Qwen family friendly.
+ mode: primary
+ color: "#2f6fed"
+ permission:
+@@ -25,9 +25,10 @@ permission:
+ # Droxon-Agent — Orchestrator
+ 
+ You are a COORDINATOR, not an executor. Maintain one thin conversation thread, delegate ALL real
+-work, synthesize results. You run on the GLM model family; your discipline comes from gates and
+-tools, not from hoping the model remembers. You contain the whole harness: the SDD pipeline, the
+-/feature workflow, spec-kit fusion, YATT verification, and the fastloop gate.
++work, synthesize results. You run on the GLM or Qwen model family — the harness detects which,
++per prompt (the OpenCode plugin / Pi extension inject the family intelligence); your discipline
++comes from gates and tools, not from hoping the model remembers. You contain the whole harness:
++the SDD pipeline, the /feature workflow, spec-kit fusion, YATT verification, and the fastloop gate.
+ 
+ ## Core principles
+ 
+@@ -253,11 +254,11 @@ contract travels with them, not your voice):
+ 
+ - Reply in the user's language; generated artifacts follow the project's language conventions
+   (default English, neutral register).
+-- GLM emits reasoning the user never sees: EVERYTHING the user needs must be in the final message
++- Models may emit reasoning the user never sees: EVERYTHING the user needs must be in the final message
+   of the turn, with no tool calls after it. Lead with the outcome; readable beats terse.
+ - Reversible actions that follow from the request: proceed. Enumerable ambiguous decisions: stop
+   and ask numbered questions with options (mark one "Recomendado") — and wait.
+ - **Git delivery is the user's**: never `git commit`, `git push`, or open PRs. Leave the working
+   tree verified and report what changed; the user handles delivery.
+-- Model-agnostic for the GLM family: never hardcode a model version; per-model knobs live in
++- Model-agnostic for the GLM and Qwen families: never hardcode a model version; per-model knobs live in
+   config, not prose.
+diff --git a/docs/harness.md b/docs/harness.md
+index df7cab6..a87dadd 100644
+--- a/docs/harness.md
++++ b/docs/harness.md
+@@ -1,8 +1,8 @@
+-# OpenCode Harness (GLM family) — YATT · /feature · fastloop
++# OpenCode Harness (GLM & Qwen families) — YATT · /feature · fastloop
+ 
+ Behavioral harness for this OpenCode install, built on three levers: **YATT** (E2E/browser
+ tools), **/feature** (workflow command, adapted here into standing behavior), and **fastloop**
+-(typecheck gate). Model-agnostic for the GLM family.
++(typecheck gate). Model-agnostic for the GLM and Qwen families.
+ 
+ ---
+ 
+@@ -171,7 +171,7 @@ the harness just refuses to declare done before it.
+ 
+ ---
+ 
+-## 5. GLM family compatibility (model-agnostic)
++## 5. GLM & Qwen family compatibility (model-agnostic)
+ 
+ The harness targets the GLM **family**. A new GLM changes ONE thing: the model ID in config.
+ Family-level contracts that stay fixed:
+@@ -189,6 +189,21 @@ Family-level contracts that stay fixed:
+ - **Swap checklist**: update model ID → smoke feature through /feature → confirm fastloop + YATT
+   → done. Harness, command, plugin: untouched.
+ 
++### Qwen family
++
++Detection and injection are mechanical, per prompt, and silent:
++
++- `plugin/model-family.ts` holds the detection table (model-ID patterns first — `/qwen/i`,
++  `/glm/i` — then endpoint: DashScope/ModelStudio → Qwen, `z.ai` → GLM) and the distilled
++  family blocks. Qwen specifics: [`qwen-notes.md`](qwen-notes.md).
++- OpenCode: the plugin captures the family per session (`chat.message`) and appends the Qwen
++  block to the system prompt (`experimental.chat.system.transform`); the `task` subagent
++  contract gains a short Qwen note only in Qwen sessions. GLM/unknown sessions: behavior
++  byte-identical to before — nothing is injected.
++- Pi: the extension appends the same block in `before_agent_start` when the session model is
++  Qwen (`ctx.model`); otherwise it returns undefined and Pi's prompt is untouched.
++- Auth/connection setup is out of scope for the installer: it ships no endpoints or keys.
++
+ ---
+ 
+ ## 6. Division of labor
+diff --git a/install.sh b/install.sh
+index 0a6b1ce..2da8efa 100755
+--- a/install.sh
++++ b/install.sh
+@@ -190,6 +190,7 @@ install_harness_opencode() {
+   done
+   cp "$SRC/command/feature.md"       "$DEST/command/feature.md"
+   cp "$SRC/plugin/droxon-harness.ts" "$DEST/plugins/droxon-harness.ts"
++  cp "$SRC/plugin/model-family.ts"   "$DEST/plugins/model-family.ts"
+   cp "$SRC/tui/droxon-logo.tsx"      "$DEST/tui-plugins/droxon-logo.tsx"
+   if [ -f "$DEST/tui-plugins/gentle-logo.tsx" ]; then
+     rm "$DEST/tui-plugins/gentle-logo.tsx"
+diff --git a/package.json b/package.json
+index 0c4cf7d..e79445e 100644
+--- a/package.json
++++ b/package.json
+@@ -1,11 +1,11 @@
+ {
+   "name": "opencode-droxon-harness",
+   "version": "1.0.0",
+-  "description": "Droxon harness for OpenCode: one orchestrator agent that runs the SDD pipeline, /feature workflow, spec-kit fusion, YATT E2E verification and the fastloop completion gate. GLM-family friendly.",
++  "description": "Droxon harness for OpenCode: one orchestrator agent that runs the SDD pipeline, /feature workflow, spec-kit fusion, YATT E2E verification and the fastloop completion gate. GLM & Qwen family friendly.",
+   "type": "module",
+   "main": "plugin/droxon-harness.ts",
+   "scripts": {
+-    "test": "bash tests/test-install.sh"
++    "test": "bash tests/test-install.sh && bash tests/test-family.sh"
+   },
+   "pi": {
+     "prompts": ["pi/prompts/*.md"],
+@@ -36,7 +36,8 @@
+     "spec-kit",
+     "yatt",
+     "fastloop",
+-    "glm"
++    "glm",
++    "qwen"
+   ],
+   "repository": {
+     "type": "git",
+diff --git a/pi/extensions/droxon-harness.ts b/pi/extensions/droxon-harness.ts
+index 605dccc..29b0f1c 100644
+--- a/pi/extensions/droxon-harness.ts
++++ b/pi/extensions/droxon-harness.ts
+@@ -2,6 +2,7 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+ import { execFile } from "node:child_process";
+ import { existsSync, readFileSync } from "node:fs";
+ import { join } from "node:path";
++import { detectModelFamily, familyIntelBlock, resolveFamily } from "../../plugin/model-family.ts";
+ 
+ // Droxon harness extension for Pi.
+ //
+@@ -71,6 +72,20 @@ function run(cmd: string, args: string[], cwd: string) {
+ }
+ 
+ export default function droxonHarness(pi: ExtensionAPI) {
++  // Qwen model-family support: per-prompt detection, silent (no runtime
++  // announcements). Only detected-Qwen models get the family block appended;
++  // glm/unknown return undefined and keep Pi's prompt untouched (regression
++  // zero). Official pattern: examples/extensions/pirate.ts. Model fields
++  // verified against pi-ai's Model type: id, provider, baseUrl.
++  pi.on("before_agent_start", async (event, ctx) => {
++    const model = ctx.model;
++    const family = resolveFamily(
++      detectModelFamily({ modelID: model?.id, providerID: model?.provider, baseUrl: model?.baseUrl }),
++    );
++    if (family !== "qwen") return undefined;
++    return { systemPrompt: event.systemPrompt + "\n\n" + familyIntelBlock("qwen") };
++  });
++
+   pi.registerCommand("droxon-verify", {
+     description:
+       "Run the project's real build/typecheck gate (Droxon completion gate)",
+diff --git a/plugin/droxon-harness.ts b/plugin/droxon-harness.ts
+index f2d98e8..409caa2 100644
+--- a/plugin/droxon-harness.ts
++++ b/plugin/droxon-harness.ts
+@@ -1,4 +1,5 @@
+ import type { Plugin } from "@opencode-ai/plugin";
++import { detectModelFamily, familyIntelBlock, type ModelFamily } from "./model-family.ts";
+ 
+ // Droxon harness plugin — mechanical enforcement of the standing rules that
+ // are NOT already enforced by code elsewhere (fastloop owns the typecheck gate;
+@@ -20,14 +21,57 @@ const REMINDER = [
+   "- Everything the caller needs must be in your FINAL message: status, what was done, evidence, risks. No tool calls after it.",
+ ].join("\n");
+ 
++// Qwen addendum appended AFTER the REMINDER only when the session's detected
++// family is qwen. GLM/unknown sessions keep the REMINDER byte-identical.
++const QWEN_SUBAGENT_NOTE = [
++  "",
++  "QWEN SUBAGENT NOTE (appended by plugin):",
++  "- Everything the caller needs must be in your FINAL message: Qwen hidden reasoning (when present) never reaches the user.",
++  "- Emit tool calls in the qwen-coder XML form: <tool_call><function=name><parameter=key>value</parameter></function></tool_call>.",
++].join("\n");
++
++// Family per session, captured by "chat.message" (the only per-message hook
++// that exposes the model); "tool.execute.before" does NOT expose the model,
++// so the task hook reads the family from here. Keyed by sessionID and
++// rewritten on every chat.message, so a mid-session model swap is picked up.
++const sessionFamilies = new Map<string, ModelFamily>();
++
+ export const DroxonHarnessPlugin: Plugin = async () => {
+   return {
++    "chat.message": async (input) => {
++      sessionFamilies.set(
++        input.sessionID,
++        detectModelFamily({ modelID: input.model?.modelID, providerID: input.model?.providerID }),
++      );
++    },
++    "experimental.chat.system.transform": async (input, output) => {
++      // Experimental hook: absent in older OpenCode builds -> never called
++      // (graceful degradation); shape-defensive read because the SDK Model
++      // carries the endpoint at api.url today.
++      const model = input.model as
++        | { id?: string; providerID?: string; api?: { url?: string }; baseUrl?: string }
++        | undefined;
++      if (
++        detectModelFamily({
++          modelID: model?.id,
++          providerID: model?.providerID,
++          baseUrl: model?.api?.url ?? model?.baseUrl,
++        }) !== "qwen"
++      ) {
++        return;
++      }
++      // Each transform call is fresh for its request; the guard only protects
++      // against a host that re-runs the transform over an already-extended list.
++      if (output.system.some((entry) => entry.includes("QWEN MODEL FAMILY INTELLIGENCE"))) return;
++      output.system.push(familyIntelBlock("qwen"));
++    },
+     "tool.execute.before": async (input, output) => {
+       if (input.tool !== "task") return;
+       const prompt = String(output.args?.prompt ?? "");
+       if (prompt.length === 0) return; // let OpenCode's own validation handle it
+       if (prompt.includes("DROXON HARNESS CONTRACT")) return; // idempotent
+-      output.args.prompt = prompt + REMINDER;
++      const note = sessionFamilies.get(input.sessionID) === "qwen" ? QWEN_SUBAGENT_NOTE : "";
++      output.args.prompt = prompt + REMINDER + note;
+     },
+   };
+ };
+
+=== NEW FILE: plugin/model-family.ts ===
+// Model-family intelligence for the Droxon harness: detection + distilled
+// per-family behavior blocks (single source of truth — per-model knowledge
+// lives here in data, never scattered in prose). Imported by the OpenCode
+// plugin as "./model-family.ts" (works in-repo and installed, because the
+// installer copies this file next to the plugin) and by the Pi extension as
+// "../../plugin/model-family.ts" (Pi loads the package in place).
+//
+// Decision 2b: only DETECTED-Qwen sessions receive injected blocks; glm and
+// unknown keep the static GLM-tuned harness byte-identical (regression zero).
+
+export type ModelFamily = "glm" | "qwen" | "unknown";
+
+// Detection is data-driven, mirroring qwen-code's name-based gating:
+// model-ID signal first — a model that NAMES itself glm/qwen is that family
+// even when routed through the other family's endpoint (e.g. glm-5 on
+// DashScope) — then endpoint signal from providerID+baseUrl concatenated.
+// All matching is case-insensitive; anything else is "unknown".
+export function detectModelFamily(input: {
+  modelID?: string;
+  providerID?: string;
+  baseUrl?: string;
+}): ModelFamily {
+  const modelID = input.modelID ?? "";
+  if (/qwen/i.test(modelID)) return "qwen";
+  if (/glm/i.test(modelID)) return "glm";
+  const endpoint = `${input.providerID ?? ""} ${input.baseUrl ?? ""}`;
+  if (/dashscope|maas|aliyuncs/i.test(endpoint)) return "qwen";
+  if (/z\.ai/i.test(endpoint)) return "glm";
+  return "unknown";
+}
+
+// Unknown families get the GLM treatment (decision 2b): the static harness
+// already IS the GLM deal, so "no signal" means "no injected block, GLM prose".
+export function resolveFamily(f: ModelFamily): "glm" | "qwen" {
+  return f === "qwen" ? "qwen" : "glm";
+}
+
+// Marker string is load-bearing: the OpenCode plugin greps the system entries
+// for it to keep the transform idempotent. tests/family.spec.ts pins it.
+const QWEN_BLOCK_HEADER = "QWEN MODEL FAMILY INTELLIGENCE";
+
+// GLM: distilled from docs/harness.md "GLM notes" — the standing assumptions
+// the static harness already encodes.
+const GLM_BLOCK = [
+  "GLM MODEL FAMILY INTELLIGENCE (distilled GLM notes):",
+  "- GLM emits reasoning parts the user never sees: the final message carries the deliverable.",
+  "  Everything the user needs must be in the final message of the turn.",
+  "- Order stable instructions first, volatile context last (prompt-cache friendly).",
+  "- Discipline lives in gates and tools, not in hoping the model remembers.",
+].join("\n");
+
+// QWEN: distilled from the official qwen-code harness (not a calque — see
+// docs/qwen-notes.md). Injected only when the family is detected as qwen.
+const QWEN_BLOCK = [
+  `${QWEN_BLOCK_HEADER} (injected by the harness for detected Qwen models):`,
+  "- Hidden reasoning is not a delivery channel: many Qwen coder models emit none at all, and",
+  "  hosted plus/max tiers may emit some. Everything the user needs must be in the final message",
+  "  of the turn — outcome first, then evidence and risks. No tool calls after it.",
+  "- Tool-call syntax (qwen-coder XML form):",
+  "  <tool_call><function=name><parameter=key>value</parameter></function></tool_call>",
+  "- Hosted Qwen coder models allow ~1M input tokens / ~64K output tokens: do not assume smaller",
+  "  limits and do not truncate deliverables to save space.",
+  "- Never rely on forced tool selection (tool_choice=\"required\") while thinking mode is active:",
+  "  DashScope rejects that combination.",
+  "- Qwen specifics (detection signals, model tiers, thinking behavior, auth): docs/qwen-notes.md.",
+].join("\n");
+
+export function familyIntelBlock(family: "glm" | "qwen"): string {
+  return family === "qwen" ? QWEN_BLOCK : GLM_BLOCK;
+}
+
+=== NEW FILE: tests/family.spec.ts ===
+import { describe, expect, test } from "bun:test";
+import {
+  detectModelFamily,
+  familyIntelBlock,
+  resolveFamily,
+  type ModelFamily,
+} from "../plugin/model-family.ts";
+
+// Detection table (C7): modelID signal first, endpoint signal second,
+// case-insensitive, unknown otherwise. See plugin/model-family.ts.
+describe("detectModelFamily", () => {
+  const table: Array<{
+    name: string;
+    input: { modelID?: string; providerID?: string; baseUrl?: string };
+    want: ModelFamily;
+  }> = [
+    { name: "glm-5.3-flash -> glm", input: { modelID: "glm-5.3-flash" }, want: "glm" },
+    {
+      name: "glm-5 + z.ai endpoint -> glm",
+      input: { modelID: "glm-5", baseUrl: "https://api.z.ai/api/paas/v4" },
+      want: "glm",
+    },
+    { name: "qwen3-coder-plus -> qwen", input: { modelID: "qwen3-coder-plus" }, want: "qwen" },
+    { name: "qwen3.6-plus -> qwen", input: { modelID: "qwen3.6-plus" }, want: "qwen" },
+    { name: "qwen3-coder-next -> qwen", input: { modelID: "qwen3-coder-next" }, want: "qwen" },
+    { name: "kimi-k2.5 -> unknown", input: { modelID: "kimi-k2.5" }, want: "unknown" },
+    { name: "deepseek-v4 -> unknown", input: { modelID: "deepseek-v4" }, want: "unknown" },
+    { name: "GPT-5.2 -> unknown", input: { modelID: "GPT-5.2" }, want: "unknown" },
+    { name: "GLM-5 uppercase -> glm", input: { modelID: "GLM-5" }, want: "glm" },
+    {
+      // modelID wins over the endpoint signal
+      name: "glm-5 + dashscope provider -> glm (modelID precedence)",
+      input: { modelID: "glm-5", providerID: "dashscope" },
+      want: "glm",
+    },
+    {
+      name: "dashscope baseUrl only -> qwen",
+      input: { baseUrl: "https://dashscope.aliyuncs.com/compatible-mode/v1" },
+      want: "qwen",
+    },
+    {
+      name: "coding-intl dashscope baseUrl only -> qwen",
+      input: { baseUrl: "https://coding-intl.dashscope.aliyuncs.com/v1" },
+      want: "qwen",
+    },
+    {
+      name: "z.ai baseUrl only -> glm",
+      input: { baseUrl: "https://api.z.ai/api/paas/v4" },
+      want: "glm",
+    },
+    { name: "dashscope providerID only -> qwen", input: { providerID: "dashscope" }, want: "qwen" },
+    { name: "empty input -> unknown", input: {}, want: "unknown" },
+  ];
+
+  for (const { name, input, want } of table) {
+    test(name, () => {
+      expect(detectModelFamily(input)).toBe(want);
+    });
+  }
+});
+
+describe("resolveFamily", () => {
+  test("unknown maps to glm (decision 2b: GLM treatment for unknowns)", () => {
+    expect(resolveFamily("unknown")).toBe("glm");
+  });
+  test("glm stays glm", () => {
+    expect(resolveFamily("glm")).toBe("glm");
+  });
+  test("qwen stays qwen", () => {
+    expect(resolveFamily("qwen")).toBe("qwen");
+  });
+});
+
+describe("familyIntelBlock", () => {
+  test("qwen block contains qwen-coder tool_call syntax", () => {
+    const block = familyIntelBlock("qwen");
+    expect(block).toContain("tool_call");
+  });
+  test("qwen block mentions Qwen and the final-message contract", () => {
+    const block = familyIntelBlock("qwen");
+    expect(block).toContain("Qwen");
+    expect(block).toContain("final message");
+  });
+  test("qwen block carries the marker the plugin idempotency guard greps for", () => {
+    const block = familyIntelBlock("qwen");
+    expect(block).toContain("QWEN MODEL FAMILY INTELLIGENCE");
+  });
+  test("glm block mentions the final-message contract", () => {
+    const block = familyIntelBlock("glm");
+    expect(block).toContain("final message");
+  });
+});
+
+describe("statelessness (C6)", () => {
+  test("consecutive calls with different inputs are independent", () => {
+    const a = detectModelFamily({ modelID: "qwen3-coder-plus" });
+    const b = detectModelFamily({ modelID: "glm-5.3-flash" });
+    const c = detectModelFamily({ baseUrl: "https://dashscope.aliyuncs.com/compatible-mode/v1" });
+    const d = detectModelFamily({ modelID: "kimi-k2.5" });
+    const e = detectModelFamily({ modelID: "qwen3-coder-plus" });
+    expect(a).toBe("qwen");
+    expect(b).toBe("glm");
+    expect(c).toBe("qwen");
+    expect(d).toBe("unknown");
+    expect(e).toBe("qwen");
+  });
+});
+
+=== NEW FILE: tests/test-family.sh ===
+#!/usr/bin/env bash
+# Droxon model-family test-suite (Qwen/GLM detection + injection wiring).
+# Run: bash tests/test-family.sh
+#
+# Two layers: behavioral specs via bun (skipped cleanly when bun is missing,
+# same as the extension-transpile check in test-install.sh), then
+# source-level assertions that the injection wiring and installer changes
+# exist where the docs say they do.
+set -uo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
+PASS=0
+FAIL=0
+
+ok()  { PASS=$((PASS+1)); printf '  ok  %s\n' "$1"; }
+bad() { FAIL=$((FAIL+1)); printf '  FAIL %s\n' "$1"; [ -n "${2:-}" ] && printf '       -> %s\n' "$2"; }
+
+check() { # check <description> <command...>
+  local desc="$1"; shift
+  if "$@" >/dev/null 2>&1; then ok "$desc"; else bad "$desc"; fi
+}
+
+check_file() { check "file exists: $1" test -f "$1"; }
+check_grep() { check "grep '$2' in $3" grep -q -- "$2" "$3"; }
+
+# ----------------------------------------------------------------------------
+t_family_spec() {
+  echo "== T-FAMILY-SPEC: bun test tests/family.spec.ts =="
+  if command -v bun >/dev/null 2>&1; then
+    (cd "$ROOT" && bun test tests/family.spec.ts) >/dev/null 2>&1 \
+      && ok "family spec passes (bun)" || bad "family spec passes (bun)"
+  else
+    printf '  skip bun not found (family spec)\n'
+  fi
+}
+
+t_family_sources() {
+  echo "== T-FAMILY-SOURCES: injection wiring + packaging =="
+  check_grep "plugin detects per message (chat.message)" 'chat.message' "$ROOT/plugin/droxon-harness.ts"
+  check_grep "plugin injects via system transform" 'experimental.chat.system.transform' "$ROOT/plugin/droxon-harness.ts"
+  check_grep "pi extension hooks before_agent_start" 'before_agent_start' "$ROOT/pi/extensions/droxon-harness.ts"
+  check_grep "plugin imports the shared family module" 'model-family.ts' "$ROOT/plugin/droxon-harness.ts"
+  check_grep "pi extension imports the shared family module" 'model-family.ts' "$ROOT/pi/extensions/droxon-harness.ts"
+  check_file "$ROOT/docs/qwen-notes.md"
+  check_grep "package.json keyword qwen" '"qwen"' "$ROOT/package.json"
+  check_grep "installer copies model-family.ts" 'model-family.ts' "$ROOT/install.sh"
+}
+
+# ----------------------------------------------------------------------------
+tests=(t_family_spec t_family_sources)
+for t in "${tests[@]}"; do
+  $t
+done
+
+echo
+echo "Results: $PASS passed, $FAIL failed"
+[ "$FAIL" -eq 0 ]
+
+=== NEW FILE: docs/qwen-notes.md ===
+# Qwen notes
+
+Companion to the GLM notes (`docs/harness.md` §4/§5). Distilled from the official
+[qwen-code](https://github.com/QwenLM/qwen-code) harness and Qwen3-Coder docs — the essential
+behavior a generic harness must adapt to, not a calque.
+
+## Detection
+
+- Model-ID signal first (it beats the endpoint): `/qwen/i` → Qwen, `/glm/i` → GLM,
+  case-insensitive. Silent IDs (kimi, deepseek, GPT…) fall through to the endpoint signal.
+- Endpoint signal on providerID+baseUrl: Qwen — `dashscope` / `maas` / `aliyuncs`
+  (ModelStudio `https://dashscope.aliyuncs.com/compatible-mode/v1`, Coding Plan
+  `https://coding.dashscope.aliyuncs.com/v1` CN / `https://coding-intl.dashscope.aliyuncs.com/v1`
+  intl, Token Plan `*.maas.aliyuncs.com`); GLM — `z.ai` (`https://api.z.ai/api/paas/v4`).
+- Implemented once in `plugin/model-family.ts`; the OpenCode plugin and the Pi extension both
+  import it. Detection runs per prompt and is silent — no runtime announcements.
+
+## Model tiers
+
+- Open-weight Qwen3-Coder instruct models (incl. Qwen3-Coder-Next): non-thinking only — they
+  emit no `<think>` blocks and need no `enable_thinking` switch.
+- Hosted plus/max tiers (qwen3.5/3.6/3.7-plus, qwen3-max): thinking on by default
+  (`extra_body.enable_thinking: true` in qwen-code's own presets).
+
+## Tool-call format
+
+- Qwen coder models use the qwen-coder XML form (the same examples qwen-code embeds for
+  `/qwen[^-]*-coder/i` model IDs):
+  `<tool_call><function=name><parameter=key>value</parameter></function></tool_call>`
+
+## Limits
+
+- Hosted coder models: max input ~1M tokens (997,952), max output 65,536 — do not assume
+  smaller windows. Open-weight Qwen3-Coder: 256K native, 1M with Yarn.
+
+## DashScope quirk
+
+- `tool_choice: "required"` is rejected while thinking mode is active — never force tool
+  selection in that combination (qwen-code drops forced selection on DashScope for this reason).
+
+## Auth reality
+
+- Alibaba ModelStudio / Coding Plan API keys (Coding Plan keys carry the `sk-sp-` prefix;
+  standard keys use `DASHSCOPE_API_KEY`). The Qwen OAuth free tier was discontinued
+  2026-04-15 — do not build on it.
+- This harness's installer does NOT touch connection/auth setup; family support is
+  detection + injected intelligence only.
+
+## Sources
+
+- [`features/qwen-model-family-support/research/qwen-code-findings.md`](../features/qwen-model-family-support/research/qwen-code-findings.md)
+  — official qwen-code facts, cited (prompts.ts, PRs #4505/#5637/#7303/#7661, auth + settings docs).
+- [`features/qwen-model-family-support/research/repo-inventory.md`](../features/qwen-model-family-support/research/repo-inventory.md)
+  — where detection and injection hook into this repo (hook signatures with file:line).
+- [`features/qwen-model-family-support/research/sources/`](../features/qwen-model-family-support/research/sources/)
+  — official READMEs (qwen-code, Qwen3-Coder, ZCode) kept as evidence seeds.

@@ -1,0 +1,178 @@
+[
+  {
+    "name": "_meta.ts",
+    "path": "docs/_meta.ts",
+    "sha": "10f50a104d900aae458b52fc041704a92f7d7cc8",
+    "size": 205,
+    "url": "https://api.github.com/repos/QwenLM/qwen-code/contents/docs/_meta.ts?ref=main",
+    "html_url": "https://github.com/QwenLM/qwen-code/blob/main/docs/_meta.ts",
+    "git_url": "https://api.github.com/repos/QwenLM/qwen-code/git/blobs/10f50a104d900aae458b52fc041704a92f7d7cc8",
+    "download_url": "https://raw.githubusercontent.com/QwenLM/qwen-code/main/docs/_meta.ts",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/QwenLM/qwen-code/contents/docs/_meta.ts?ref=main",
+      "git": "https://api.github.com/repos/QwenLM/qwen-code/git/blobs/10f50a104d900aae458b52fc041704a92f7d7cc8",
+      "html": "https://github.com/QwenLM/qwen-code/blob/main/docs/_meta.ts"
+    }
+  },
+  {
+    "name": "assets",
+    "path": "docs/assets",
+    "sha": "dc06b6edf3216cf57b46853e529bbaee3168971b",
+    "size": 0,
+    "url": "https://api.github.com/repos/QwenLM/qwen-code/contents/docs/assets?ref=main",
+    "html_url": "https://github.com/QwenLM/qwen-code/tree/main/docs/assets",
+    "git_url": "https://api.github.com/repos/QwenLM/qwen-code/git/trees/dc06b6edf3216cf57b46853e529bbaee3168971b",
+    "download_url": null,
+    "type": "dir",
+    "_links": {
+      "self": "https://api.github.com/repos/QwenLM/qwen-code/contents/docs/assets?ref=main",
+      "git": "https://api.github.com/repos/QwenLM/qwen-code/git/trees/dc06b6edf3216cf57b46853e529bbaee3168971b",
+      "html": "https://github.com/QwenLM/qwen-code/tree/main/docs/assets"
+    }
+  },
+  {
+    "name": "design",
+    "path": "docs/design",
+    "sha": "8829485ac1fcda8d84f97c1599e8f177aec22df5",
+    "size": 0,
+    "url": "https://api.github.com/repos/QwenLM/qwen-code/contents/docs/design?ref=main",
+    "html_url": "https://github.com/QwenLM/qwen-code/tree/main/docs/design",
+    "git_url": "https://api.github.com/repos/QwenLM/qwen-code/git/trees/8829485ac1fcda8d84f97c1599e8f177aec22df5",
+    "download_url": null,
+    "type": "dir",
+    "_links": {
+      "self": "https://api.github.com/repos/QwenLM/qwen-code/contents/docs/design?ref=main",
+      "git": "https://api.github.com/repos/QwenLM/qwen-code/git/trees/8829485ac1fcda8d84f97c1599e8f177aec22df5",
+      "html": "https://github.com/QwenLM/qwen-code/tree/main/docs/design"
+    }
+  },
+  {
+    "name": "developers",
+    "path": "docs/developers",
+    "sha": "2dd9c2533b5c2cbf6ed637e30804022c92df4064",
+    "size": 0,
+    "url": "https://api.github.com/repos/QwenLM/qwen-code/contents/docs/developers?ref=main",
+    "html_url": "https://github.com/QwenLM/qwen-code/tree/main/docs/developers",
+    "git_url": "https://api.github.com/repos/QwenLM/qwen-code/git/trees/2dd9c2533b5c2cbf6ed637e30804022c92df4064",
+    "download_url": null,
+    "type": "dir",
+    "_links": {
+      "self": "https://api.github.com/repos/QwenLM/qwen-code/contents/docs/developers?ref=main",
+      "git": "https://api.github.com/repos/QwenLM/qwen-code/git/trees/2dd9c2533b5c2cbf6ed637e30804022c92df4064",
+      "html": "https://github.com/QwenLM/qwen-code/tree/main/docs/developers"
+    }
+  },
+  {
+    "name": "e2e-tests",
+    "path": "docs/e2e-tests",
+    "sha": "2698e355610a012d766f8e988b3443881d12b773",
+    "size": 0,
+    "url": "https://api.github.com/repos/QwenLM/qwen-code/contents/docs/e2e-tests?ref=main",
+    "html_url": "https://github.com/QwenLM/qwen-code/tree/main/docs/e2e-tests",
+    "git_url": "https://api.github.com/repos/QwenLM/qwen-code/git/trees/2698e355610a012d766f8e988b3443881d12b773",
+    "download_url": null,
+    "type": "dir",
+    "_links": {
+      "self": "https://api.github.com/repos/QwenLM/qwen-code/contents/docs/e2e-tests?ref=main",
+      "git": "https://api.github.com/repos/QwenLM/qwen-code/git/trees/2698e355610a012d766f8e988b3443881d12b773",
+      "html": "https://github.com/QwenLM/qwen-code/tree/main/docs/e2e-tests"
+    }
+  },
+  {
+    "name": "images",
+    "path": "docs/images",
+    "sha": "7a225ec5c88f263a0cdfe40db29a539190e5495e",
+    "size": 0,
+    "url": "https://api.github.com/repos/QwenLM/qwen-code/contents/docs/images?ref=main",
+    "html_url": "https://github.com/QwenLM/qwen-code/tree/main/docs/images",
+    "git_url": "https://api.github.com/repos/QwenLM/qwen-code/git/trees/7a225ec5c88f263a0cdfe40db29a539190e5495e",
+    "download_url": null,
+    "type": "dir",
+    "_links": {
+      "self": "https://api.github.com/repos/QwenLM/qwen-code/contents/docs/images?ref=main",
+      "git": "https://api.github.com/repos/QwenLM/qwen-code/git/trees/7a225ec5c88f263a0cdfe40db29a539190e5495e",
+      "html": "https://github.com/QwenLM/qwen-code/tree/main/docs/images"
+    }
+  },
+  {
+    "name": "index.md",
+    "path": "docs/index.md",
+    "sha": "ff8a480373e4cb61bcb9dd5efe11c0c4258a2572",
+    "size": 729,
+    "url": "https://api.github.com/repos/QwenLM/qwen-code/contents/docs/index.md?ref=main",
+    "html_url": "https://github.com/QwenLM/qwen-code/blob/main/docs/index.md",
+    "git_url": "https://api.github.com/repos/QwenLM/qwen-code/git/blobs/ff8a480373e4cb61bcb9dd5efe11c0c4258a2572",
+    "download_url": "https://raw.githubusercontent.com/QwenLM/qwen-code/main/docs/index.md",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/QwenLM/qwen-code/contents/docs/index.md?ref=main",
+      "git": "https://api.github.com/repos/QwenLM/qwen-code/git/blobs/ff8a480373e4cb61bcb9dd5efe11c0c4258a2572",
+      "html": "https://github.com/QwenLM/qwen-code/blob/main/docs/index.md"
+    }
+  },
+  {
+    "name": "plans",
+    "path": "docs/plans",
+    "sha": "6c3b74ddba3ed211e00cc0f8fa120a6b938f485a",
+    "size": 0,
+    "url": "https://api.github.com/repos/QwenLM/qwen-code/contents/docs/plans?ref=main",
+    "html_url": "https://github.com/QwenLM/qwen-code/tree/main/docs/plans",
+    "git_url": "https://api.github.com/repos/QwenLM/qwen-code/git/trees/6c3b74ddba3ed211e00cc0f8fa120a6b938f485a",
+    "download_url": null,
+    "type": "dir",
+    "_links": {
+      "self": "https://api.github.com/repos/QwenLM/qwen-code/contents/docs/plans?ref=main",
+      "git": "https://api.github.com/repos/QwenLM/qwen-code/git/trees/6c3b74ddba3ed211e00cc0f8fa120a6b938f485a",
+      "html": "https://github.com/QwenLM/qwen-code/tree/main/docs/plans"
+    }
+  },
+  {
+    "name": "superpowers",
+    "path": "docs/superpowers",
+    "sha": "1466defc348d6b46ff34bb01ee5eae57eb111fb7",
+    "size": 0,
+    "url": "https://api.github.com/repos/QwenLM/qwen-code/contents/docs/superpowers?ref=main",
+    "html_url": "https://github.com/QwenLM/qwen-code/tree/main/docs/superpowers",
+    "git_url": "https://api.github.com/repos/QwenLM/qwen-code/git/trees/1466defc348d6b46ff34bb01ee5eae57eb111fb7",
+    "download_url": null,
+    "type": "dir",
+    "_links": {
+      "self": "https://api.github.com/repos/QwenLM/qwen-code/contents/docs/superpowers?ref=main",
+      "git": "https://api.github.com/repos/QwenLM/qwen-code/git/trees/1466defc348d6b46ff34bb01ee5eae57eb111fb7",
+      "html": "https://github.com/QwenLM/qwen-code/tree/main/docs/superpowers"
+    }
+  },
+  {
+    "name": "users",
+    "path": "docs/users",
+    "sha": "80a1eb4884af6f011508715faa37c11491ea1b3b",
+    "size": 0,
+    "url": "https://api.github.com/repos/QwenLM/qwen-code/contents/docs/users?ref=main",
+    "html_url": "https://github.com/QwenLM/qwen-code/tree/main/docs/users",
+    "git_url": "https://api.github.com/repos/QwenLM/qwen-code/git/trees/80a1eb4884af6f011508715faa37c11491ea1b3b",
+    "download_url": null,
+    "type": "dir",
+    "_links": {
+      "self": "https://api.github.com/repos/QwenLM/qwen-code/contents/docs/users?ref=main",
+      "git": "https://api.github.com/repos/QwenLM/qwen-code/git/trees/80a1eb4884af6f011508715faa37c11491ea1b3b",
+      "html": "https://github.com/QwenLM/qwen-code/tree/main/docs/users"
+    }
+  },
+  {
+    "name": "verification",
+    "path": "docs/verification",
+    "sha": "d3c5bd7aa646688d9278eb70c7e43b67fab6a61c",
+    "size": 0,
+    "url": "https://api.github.com/repos/QwenLM/qwen-code/contents/docs/verification?ref=main",
+    "html_url": "https://github.com/QwenLM/qwen-code/tree/main/docs/verification",
+    "git_url": "https://api.github.com/repos/QwenLM/qwen-code/git/trees/d3c5bd7aa646688d9278eb70c7e43b67fab6a61c",
+    "download_url": null,
+    "type": "dir",
+    "_links": {
+      "self": "https://api.github.com/repos/QwenLM/qwen-code/contents/docs/verification?ref=main",
+      "git": "https://api.github.com/repos/QwenLM/qwen-code/git/trees/d3c5bd7aa646688d9278eb70c7e43b67fab6a61c",
+      "html": "https://github.com/QwenLM/qwen-code/tree/main/docs/verification"
+    }
+  }
+]
