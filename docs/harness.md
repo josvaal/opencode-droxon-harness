@@ -1,8 +1,8 @@
-# OpenCode Harness (GLM family) — YATT · /feature · fastloop
+# OpenCode Harness (GLM & Qwen families) — YATT · /feature · fastloop
 
 Behavioral harness for this OpenCode install, built on three levers: **YATT** (E2E/browser
 tools), **/feature** (workflow command, adapted here into standing behavior), and **fastloop**
-(typecheck gate). Model-agnostic for the GLM family.
+(typecheck gate). Model-agnostic for the GLM and Qwen families.
 
 ---
 
@@ -171,7 +171,7 @@ the harness just refuses to declare done before it.
 
 ---
 
-## 5. GLM family compatibility (model-agnostic)
+## 5. GLM & Qwen family compatibility (model-agnostic)
 
 The harness targets the GLM **family**. A new GLM changes ONE thing: the model ID in config.
 Family-level contracts that stay fixed:
@@ -188,6 +188,21 @@ Family-level contracts that stay fixed:
   of model.
 - **Swap checklist**: update model ID → smoke feature through /feature → confirm fastloop + YATT
   → done. Harness, command, plugin: untouched.
+
+### Qwen family
+
+Detection and injection are mechanical, per prompt, and silent:
+
+- `plugin/model-family.ts` holds the detection table (model-ID patterns first — `/qwen/i`,
+  `/glm/i` — then endpoint: DashScope/ModelStudio → Qwen, `z.ai` → GLM) and the distilled
+  family blocks. Qwen specifics: [`qwen-notes.md`](qwen-notes.md).
+- OpenCode: the plugin captures the family per session (`chat.message`) and appends the Qwen
+  block to the system prompt (`experimental.chat.system.transform`); the `task` subagent
+  contract gains a short Qwen note only in Qwen sessions. GLM/unknown sessions: behavior
+  byte-identical to before — nothing is injected.
+- Pi: the extension appends the same block in `before_agent_start` when the session model is
+  Qwen (`ctx.model`); otherwise it returns undefined and Pi's prompt is untouched.
+- Auth/connection setup is out of scope for the installer: it ships no endpoints or keys.
 
 ---
 

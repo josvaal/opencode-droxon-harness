@@ -5,8 +5,9 @@ delegates the SDD pipeline to shipped subagents, drives spec-kit (`speckit`) whe
 has `.specify/`, enforces interactive ⛔ gates, and merges the verification stack —
 **tests + fastloop + YATT + dual-judge adversarial review** — before anything is called done.
 
-Model-agnostic for the **GLM family**: pick any GLM in `opencode.json`; no model version is
-hardcoded in prompts, per-model knobs live in config.
+Model-agnostic for the **GLM and Qwen families**: the harness detects the model family on every
+prompt (OpenCode plugin / Pi extension) and adapts; no model version is hardcoded in prompts,
+per-model knobs live in config.
 
 ```
 ⠀⠀⢀⣤⣶⣶⣦⣄⡀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣤⣶⣶⠆⠀⠀⠀⠀
