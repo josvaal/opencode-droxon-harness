@@ -58,6 +58,8 @@ t_opencode_no_regression() {
   check_file "$d/agent/jd-judge-a.md"
   check_file "$d/command/feature.md"
   check_file "$d/plugins/droxon-harness.ts"
+  check_file "$d/lib/model-family.ts"
+  check_no_file "$d/plugins/model-family.ts" # data module: must NOT sit in the auto-loaded plugins/ dir
   check_file "$d/tui-plugins/droxon-logo.tsx"
   check_file "$d/opencode.json"
   check_file "$d/tui.json"
@@ -141,6 +143,7 @@ agent_dir_copies_ok() { # copies only exist in the manual-fallback path (no pi C
   check_file "$d/prompts/feature.md"
   check_file "$d/skills/droxon-orchestrator/SKILL.md"
   check_file "$d/extensions/droxon-harness.ts"
+  check_file "$d/model-family.ts" # extension's fallback import target
   python3 - "$d/skills/droxon-orchestrator/SKILL.md" <<'SKILLEOF' && ok "SKILL.md frontmatter has name+description" || bad "SKILL.md frontmatter"
 import sys
 head = open(sys.argv[1]).read().split('---')[1]

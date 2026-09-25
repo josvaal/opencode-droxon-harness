@@ -3,6 +3,14 @@ import { execFile } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
+// Shared family module, loaded dynamically because its installed location
+// depends on the deployment layout: in-place (pi install <repo>) resolves
+// "../../plugin/model-family.ts"; the no-CLI fallback stages the extension
+// alone into <agent-dir>/extensions/, so the installer puts the module at the
+// agent-dir root and the cascade resolves "../model-family.ts". Family
+// features silently disable if no layout resolves; /droxon-verify keeps
+// working regardless.
+
 // Droxon harness extension for Pi.
 //
 // Mechanical equivalent of the OpenCode fastloop completion gate: a command
@@ -11,6 +19,36 @@ import { join } from "node:path";
 // or E2E — it is the cheap signal that the touched code at least compiles.
 
 type VerifyScript = { cmd: string; args: string[]; label: string };
+
+type FamilyModule = {
+  detectModelFamily(input: {
+    modelID?: string;
+    providerID?: string;
+    baseUrl?: string;
+  }): "glm" | "qwen" | "unknown";
+  resolveFamily(family: "glm" | "qwen" | "unknown"): "glm" | "qwen";
+  familyIntelBlock(family: "glm" | "qwen"): string;
+};
+
+let familyModulePromise: Promise<FamilyModule | null> | null = null;
+function loadFamilyModule(): Promise<FamilyModule | null> {
+  if (!familyModulePromise) {
+    familyModulePromise = (async () => {
+      for (const spec of [
+        "../../plugin/model-family.ts", // in-place package layout
+        "../model-family.ts", // manual fallback: staged at agent-dir root
+      ] as const) {
+        try {
+          return (await import(spec)) as FamilyModule;
+        } catch {
+          // try the next layout
+        }
+      }
+      return null;
+    })();
+  }
+  return familyModulePromise;
+}
 
 const SCRIPT_PRIORITY = [
   "typecheck",
@@ -71,6 +109,27 @@ function run(cmd: string, args: string[], cwd: string) {
 }
 
 export default function droxonHarness(pi: ExtensionAPI) {
+  // Qwen model-family support: per-prompt detection, silent (no runtime
+  // announcements). Only detected-Qwen models get the family block appended;
+  // glm/unknown return undefined and keep Pi's prompt untouched (regression
+  // zero). Official pattern: examples/extensions/pirate.ts. Model fields
+  // verified against pi-ai's Model type: id, provider, baseUrl.
+  pi.on("before_agent_start", async (event, ctx) => {
+    const mod = await loadFamilyModule();
+    if (!mod) return undefined;
+    const model = ctx.model;
+    // Model fields verified against pi-ai's Model type: id, provider, baseUrl.
+    const family = mod.resolveFamily(
+      mod.detectModelFamily({
+        modelID: model?.id,
+        providerID: model?.provider,
+        baseUrl: model?.baseUrl,
+      }),
+    );
+    if (family !== "qwen") return undefined;
+    return { systemPrompt: event.systemPrompt + "\n\n" + mod.familyIntelBlock("qwen") };
+  });
+
   pi.registerCommand("droxon-verify", {
     description:
       "Run the project's real build/typecheck gate (Droxon completion gate)",

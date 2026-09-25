@@ -190,6 +190,11 @@ install_harness_opencode() {
   done
   cp "$SRC/command/feature.md"       "$DEST/command/feature.md"
   cp "$SRC/plugin/droxon-harness.ts" "$DEST/plugins/droxon-harness.ts"
+  # Family module lives OUTSIDE plugins/ (OpenCode auto-loads every file
+  # there; this is data, not a plugin factory) — the plugin's import cascade
+  # resolves "../lib/model-family.ts" in this layout.
+  mkdir -p "$DEST/lib"
+  cp "$SRC/plugin/model-family.ts"   "$DEST/lib/model-family.ts"
   cp "$SRC/tui/droxon-logo.tsx"      "$DEST/tui-plugins/droxon-logo.tsx"
   if [ -f "$DEST/tui-plugins/gentle-logo.tsx" ]; then
     rm "$DEST/tui-plugins/gentle-logo.tsx"
@@ -263,6 +268,7 @@ install_opencode() {
   log "agent/: droxon-agent.md + sdd-{init,explore,propose,research,spec,design,tasks,apply,verify,archive,onboard}.md + jd-judge-{a,b}.md"
   log "command/feature.md"
   log "plugins/droxon-harness.ts"
+  log "lib/model-family.ts (shared model-family module)"
   log "tui-plugins/droxon-logo.tsx (registered in tui.json)"
   [ "$SKIP_DEPS" != "1" ] && log "deps: opencode-fastloop + YATT ($YATT_HOME) + spec-kit (best effort)"
 
@@ -382,6 +388,9 @@ install_pi() {
       cp "$d"SKILL.md "$PI_DIR/skills/$(basename "$d")/SKILL.md"
     done
     cp "$SRC/pi/extensions/"*.ts "$PI_DIR/extensions/" 2>/dev/null || true
+    # The extension's import cascade resolves "../model-family.ts" from
+    # <agent-dir>/extensions/ — stage the module at the agent-dir root.
+    cp "$SRC/plugin/model-family.ts" "$PI_DIR/model-family.ts" 2>/dev/null || true
   fi
 
   inject_orchestrator_agents_md "$PI_DIR"
