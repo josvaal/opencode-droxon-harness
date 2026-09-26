@@ -387,10 +387,28 @@ install_pi() {
       mkdir -p "$PI_DIR/skills/$(basename "$d")"
       cp "$d"SKILL.md "$PI_DIR/skills/$(basename "$d")/SKILL.md"
     done
+    if [ ! -e "$PI_DIR/skills/grill-me/SKILL.md" ] && [ ! -e "$HOME/.agents/skills/grill-me/SKILL.md" ]; then
+      mkdir -p "$PI_DIR/skills/grill-me"
+      cp "$SRC/vendor-skills/grill-me/SKILL.md" "$PI_DIR/skills/grill-me/SKILL.md"
+    fi
     cp "$SRC/pi/extensions/"*.ts "$PI_DIR/extensions/" 2>/dev/null || true
     # The extension's import cascade resolves "../model-family.ts" from
     # <agent-dir>/extensions/ — stage the module at the agent-dir root.
     cp "$SRC/plugin/model-family.ts" "$PI_DIR/model-family.ts" 2>/dev/null || true
+  fi
+
+  # grill-me: vendored at vendor-skills/grill-me (NOT in the package — Pi
+  # would auto-load it and collide with a personal copy). Install-once: copy
+  # into the agent dir only when no grill-me exists there or in ~/.agents.
+  local gm_target="$PI_DIR/skills/grill-me"
+  if [ -e "$gm_target/SKILL.md" ]; then
+    log "grill-me skill: already present at $gm_target — skipping (no duplication)"
+  elif [ -e "$HOME/.agents/skills/grill-me/SKILL.md" ]; then
+    log "grill-me skill: personal copy found at ~/.agents/skills/grill-me — skipping (no duplication)"
+  else
+    mkdir -p "$gm_target"
+    cp "$SRC/vendor-skills/grill-me/SKILL.md" "$gm_target/SKILL.md" \
+      && log "grill-me skill: installed at $gm_target (vendored copy, first install)"
   fi
 
   inject_orchestrator_agents_md "$PI_DIR"
@@ -424,7 +442,7 @@ install_pi() {
   log "Pi package: droxon-harness -> /feature prompt + droxon-orchestrator skill + droxon-verify extension"
   log "AGENTS.md: droxon orchestrator block (backup .bak-droxon)"
   [ "$SKIP_DEPS" != "1" ] && log "deps: pi-subagents + pi-mcp-adapter + pi-todo + pi-questions (best effort) + YATT ($YATT_HOME) + spec-kit"
-  log "grill-me skill: vendored in the package (pi/skills/grill-me) — the harness always uses it for plan/gate interrogation, questions in plain natural language"
+  log "grill-me skill: install-once from vendor-skills/grill-me (skipped if a copy already exists) — the harness always uses it for plan/gate interrogation, questions in plain natural language"
 
   echo
   echo "Restart Pi (or run /reload). Notes:"

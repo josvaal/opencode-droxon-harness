@@ -28,3 +28,16 @@ grep -n "pi-todo\|pi-questions" install.sh
 grep -n "ask_questions" pi/agents-block.md
 ./install.sh --target pi      # (cuando el usuario quiera) aplica todo en ~/.pi/agent
 ```
+
+## Post-entrega (feedback del usuario): dedupe de grill-me
+
+Pi reportó colisión: la copia personal `~/.agents/skills/grill-me` ganaba sobre
+la vendida en el package. Fix pedido por el usuario: el instalador verifica si
+ya existe grill-me y solo instala la copia vendida si no hay ninguna.
+
+- `pi/skills/grill-me/` → `vendor-skills/grill-me/` (fuera del manifest del
+  package, Pi ya no la auto-carga → sin colisión).
+- `install.sh` (ambos caminos: pi install y fallback manual): si existe
+  `$PI_DIR/skills/grill-me` o `~/.agents/skills/grill-me`, se salta con aviso
+  "no duplication"; si no, copia la vendida.
+- Re-verificado: `bash -n` OK + `npm test` 78 passed / 0 failed.
