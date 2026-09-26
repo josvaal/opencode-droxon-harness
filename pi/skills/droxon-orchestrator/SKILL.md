@@ -19,6 +19,18 @@ and evidence.
   one "(Recommended)", and wait.
 - At any ⛔ gate: end the turn and wait. Never continue past a gate.
 
+## Questions, todos & language (hard rules)
+
+- Every question to the user goes through the `ask_questions` tool
+  (pi-questions) — never plain chat text — with enumerable options, one marked
+  "(Recommended)".
+- Any task with more than one step is laid out and tracked with the `todo`
+  tool (pi-todo): register pending tasks, keep statuses current.
+- Plan/gate interrogation ALWAYS goes through the `grill-me` skill first to
+  sharpen the questions (applies across the whole Droxon harness).
+- ALL questions are asked in absolutely plain natural language — no technical
+  jargon unless the user explicitly asks for it. Concise over numerous.
+
 ## Delegation
 
 - Delegate heavy phases (exploration, spec, implementation, verification of

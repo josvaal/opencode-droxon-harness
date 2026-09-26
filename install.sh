@@ -401,6 +401,10 @@ install_pi() {
       pi_install "npm:pi-subagents" "pi-subagents" best-effort
       echo "==> Dependencies: pi-mcp-adapter (exposes MCP servers like YATT to Pi)..."
       pi_install "npm:pi-mcp-adapter" "pi-mcp-adapter" best-effort
+      echo "==> Dependencies: pi-todo (todo tool for pending-task tracking)..."
+      pi_install "npm:pi-todo" "pi-todo" best-effort
+      echo "==> Dependencies: pi-questions (ask_questions tool; mandatory for user questions)..."
+      pi_install "npm:pi-questions" "pi-questions" best-effort
       log "note: register the YATT MCP server with pi-mcp-adapter pointing at:"
       log "  bun run $YATT_HOME/mcp/src/server.ts --root $YATT_HOME"
     fi
@@ -419,7 +423,8 @@ install_pi() {
   echo "==> Done. Installed (Pi Agent):"
   log "Pi package: droxon-harness -> /feature prompt + droxon-orchestrator skill + droxon-verify extension"
   log "AGENTS.md: droxon orchestrator block (backup .bak-droxon)"
-  [ "$SKIP_DEPS" != "1" ] && log "deps: pi-subagents + pi-mcp-adapter (best effort) + YATT ($YATT_HOME) + spec-kit"
+  [ "$SKIP_DEPS" != "1" ] && log "deps: pi-subagents + pi-mcp-adapter + pi-todo + pi-questions (best effort) + YATT ($YATT_HOME) + spec-kit"
+  log "grill-me skill: vendored in the package (pi/skills/grill-me) — the harness always uses it for plan/gate interrogation, questions in plain natural language"
 
   echo
   echo "Restart Pi (or run /reload). Notes:"

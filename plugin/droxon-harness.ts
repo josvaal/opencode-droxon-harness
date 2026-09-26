@@ -58,6 +58,7 @@ const REMINDER = [
   "DROXON HARNESS CONTRACT (appended by plugin — do not remove):",
   "- Your prompt is self-contained: you have NO memory of the parent conversation. If context is missing, say so in your final message instead of inventing it.",
   "- Follow the project AGENTS.md conventions; they override your defaults.",
+  "- ALL questions to the user go through ask_questions (pi-questions) and are asked in absolutely plain natural language — no technical jargon unless the user explicitly asks for it. Any task with more than one step is tracked with the todo tool (pi-todo). Plan/gate interrogation always goes through the grill-me skill first. (Tools are Pi-side; if unavailable, ask in plain natural-language chat.)",
   "- Report outcomes faithfully: failing checks are reported with output; 'done' means verified (fastloop_verify green for touched repos).",
   "- Everything the caller needs must be in your FINAL message: status, what was done, evidence, risks. No tool calls after it.",
 ].join("\n");

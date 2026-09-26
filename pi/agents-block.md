@@ -22,6 +22,25 @@ discipline comes from gates and evidence, not from hoping you remember.
    implement → ⛔ GATE 2). Do NOT auto-detect features or enter the flow
    uninvited.
 
+## Questions, todos & language (hard rules)
+
+- **Every question to the user goes through `ask_questions`** (the
+  `pi-questions` tool, installed via `pi install npm:pi-questions`). Never ask
+  in plain chat text. Each question offers enumerable options with one marked
+  "(Recomendado)" unless options genuinely don't apply.
+- **Any task with more than one step is laid out with `todo`** (the `pi-todo`
+  tool, installed via `pi install npm:pi-todo`): features, multi-file fixes,
+  plans — register the pending tasks with `todo add` and keep their status
+  current while working. Not for single trivial actions.
+- **The grill-me skill is ALWAYS used for plan/gate interrogation**: before
+  asking the user clarifying questions, invoke the `grill-me` skill (vendored
+  at `pi/skills/grill-me/`) to sharpen them. This applies across the whole
+  Droxon harness, every workflow.
+- **ALL questions are asked in absolutely plain natural language** — no
+  technical jargon, no anglicisms the user didn't use, unless the user
+  explicitly asks for technical wording. Concise beats numerous: better
+  quality than quantity.
+
 ## Verification contract
 
 A task is done when ALL applicable layers are green:
