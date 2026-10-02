@@ -92,7 +92,7 @@ Antes de escribir UNA línea de plan:
 - Resume en ≤10 líneas qué descubriste (especialmente qué ya existe — código Y pantalla).
 - Lista los casos descubiertos que NO estaban en el pedido del usuario (incluye los que saltaron en la exploración visual o en el diagnóstico E2E).
 - Formula tus preguntas (decisiones ambiguas, trade-offs, conflictos con lo existente) numeradas, cada una con opciones enumerables y una recomendación marcada como "(Recomendado)". Afilalas primero con la skill `grill-me` (siempre). En Pi, hazlas vía la tool `ask_questions` (pi-questions) — nunca en texto de chat. En TODAS las preguntas: lenguaje absolutamente natural, cero tecnicismos salvo que el usuario lo pida explícitamente; conciso mejor que numeroso.
-- Maqueta las tareas pendientes del feature con la tool `todo` (pi-todo; solo Pi) y mantén sus estados al día.
+- Maqueta las tareas pendientes del feature con `set_tasks` (pi-todo-herdr; solo Pi) y mantén sus estados al día con `update_task`.
 - STOP. Espera las respuestas. Regístralas en `brief.md` bajo "## Decisiones". Solo entonces continúa a FASE 3.
 
 ## FASE 3 — Plan con matriz de cobertura
@@ -103,7 +103,7 @@ Escribe `features/<slug>/plan.md`: tareas numeradas y ordenadas, cada una con:
 - `Test: <ruta del spec/test>` — el test que demuestra el comportamiento. Para casos `e2e`: el test YATT persistido (o por persistir) + qué aserción lo cierra.
 - Si el cambio es BACK+FRONT: la tarea nombra su verificación por capa (spec del back + spec del front + E2E YATT del flujo completo). El E2E no reemplaza a los units: los units discriminan qué capa rompe; el E2E prueba que el usuario real resuelve su tarea.
 
-Sin excepciones: todo caso debe tener ≥1 tarea y ≥1 test que lo cubra. Un caso sin tarea o sin test significa que el plan NO está listo. En Pi, registra las tareas en la tool `todo` (pi-todo) y ve marcándolas al cerrarlas.
+Sin excepciones: todo caso debe tener ≥1 tarea y ≥1 test que lo cubra. Un caso sin tarea o sin test significa que el plan NO está listo. En Pi, registra las tareas con `set_tasks` (pi-todo-herdr) y ve marcándolas con `update_task` al cerrarlas.
 
 ## FASE 4 — Implementación
 

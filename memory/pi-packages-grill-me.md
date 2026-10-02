@@ -6,7 +6,9 @@ type: decision
 
 Feature `features/pi-todo-questions-grill-me` (2026-02): the Droxon harness
 now hard-requires (a) `ask_questions` (npm:pi-questions) for EVERY user
-question, (b) `todo` (npm:pi-todo) for any task >1 step, (c) the vendored
+question, (b) task tracking via `set_tasks`/`update_task`
+(npm:pi-todo-herdr, replaced npm:pi-todo in 2026-10; also integrates the
+Herdr sidebar) for any task >1 step, (c) the vendored
 `pi/skills/grill-me/` skill always sharpening plan/gate interrogation, and
 (d) all questions in absolutely plain natural language (no jargon unless
 asked). install.sh installs both npm packages best-effort. User decision 2b:

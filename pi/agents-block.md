@@ -28,10 +28,11 @@ discipline comes from gates and evidence, not from hoping you remember.
   `pi-questions` tool, installed via `pi install npm:pi-questions`). Never ask
   in plain chat text. Each question offers enumerable options with one marked
   "(Recomendado)" unless options genuinely don't apply.
-- **Any task with more than one step is laid out with `todo`** (the `pi-todo`
-  tool, installed via `pi install npm:pi-todo`): features, multi-file fixes,
-  plans — register the pending tasks with `todo add` and keep their status
-  current while working. Not for single trivial actions.
+- **Any task with more than one step is laid out with `set_tasks`** (the
+  `pi-todo-herdr` package, installed via `pi install npm:pi-todo-herdr`):
+  features, multi-file fixes, plans — register the pending task tree with
+  `set_tasks`, patch statuses with `update_task`, and keep them current
+  while working. Not for single trivial actions.
 - **The grill-me skill is ALWAYS used for plan/gate interrogation**: before
   asking the user clarifying questions, invoke the `grill-me` skill (vendored
   at `pi/skills/grill-me/`) to sharpen them. This applies across the whole

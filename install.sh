@@ -18,7 +18,7 @@
 #       the Pi agent dir (~/.pi/agent, override with PI_CODING_AGENT_DIR):
 #         pi install <this repo>      prompts (/feature) + skills + extension
 #         pi install npm:pi-subagents subagent delegation for Pi
-#         plus defaults: pi-todo, pi-questions, pi-undo-redo,
+#         plus defaults: pi-todo-herdr, pi-questions, pi-undo-redo,
 #         pi-pigment?name=theychat, pi-mcp-adapter (best effort)
 #         AGENTS.md                   droxon orchestrator block (merged, backup)
 #         YATT + spec-kit             shared deps (same as OpenCode)
@@ -421,8 +421,8 @@ install_pi() {
       pi_install "npm:pi-subagents" "pi-subagents" best-effort
       echo "==> Dependencies: pi-mcp-adapter (exposes MCP servers like YATT to Pi)..."
       pi_install "npm:pi-mcp-adapter" "pi-mcp-adapter" best-effort
-      echo "==> Dependencies: pi-todo (todo tool for pending-task tracking)..."
-      pi_install "npm:pi-todo" "pi-todo" best-effort
+      echo "==> Dependencies: pi-todo-herdr (hierarchical task tracking + Herdr sidebar integration)..."
+      pi_install "npm:pi-todo-herdr" "pi-todo-herdr" best-effort
       echo "==> Dependencies: pi-questions (ask_questions tool; mandatory for user questions)..."
       pi_install "npm:pi-questions" "pi-questions" best-effort
       echo "==> Dependencies: pi-undo-redo (snapshot undo/redo; doesn't hijack tools, keeps pi-pigment rendering)..."
@@ -448,7 +448,7 @@ install_pi() {
   echo "==> Done. Installed (Pi Agent):"
   log "Pi package: droxon-harness -> /feature prompt + droxon-orchestrator skill + droxon-verify extension"
   log "AGENTS.md: droxon orchestrator block (backup .bak-droxon)"
-  [ "$SKIP_DEPS" != "1" ] && log "deps: pi-subagents + pi-mcp-adapter + pi-todo + pi-questions + pi-undo-redo + pi-pigment (best effort) + YATT ($YATT_HOME) + spec-kit (pi-atelier dropped: overlaps/breaks the Pi TUI)"
+  [ "$SKIP_DEPS" != "1" ] && log "deps: pi-subagents + pi-mcp-adapter + pi-todo-herdr + pi-questions + pi-undo-redo + pi-pigment (best effort) + YATT ($YATT_HOME) + spec-kit (pi-atelier dropped: overlaps/breaks the Pi TUI)"
   log "grill-me skill: install-once from vendor-skills/grill-me (skipped if a copy already exists) — the harness always uses it for plan/gate interrogation, questions in plain natural language"
 
   echo
