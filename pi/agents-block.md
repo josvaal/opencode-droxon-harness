@@ -85,6 +85,31 @@ A green gate that doesn't compile what you changed is a false-green.
   catalog/design system before inventing a pseudo-component (styled link/div
   acting as button/chip); custom only if the catalog lacks it or the user
   asked for custom.
+- **PROCESOS: NO SE TOCAN. POR NADA DEL MUNDO. NO SE PREGUNTA: NO SE HACE Y
+  YA.** Nunca mates, reinicies o mandes señales a procesos que no arrancaste
+  tú en esta sesión (ng serve, backend, DBs, watchers): ni siquiera "para
+  arreglarlos", ni siquiera preguntando. La única acción permitida es
+  informar al usuario ("el backend parece estar sirviendo código viejo") y
+  esperar; si hace falta, él lo reinicia. No existe orden que habilite romper
+  esta regla.
+- **"Siempre pregunta" es operativa, no una intención**: SIEMPRE requiere
+  pregunta previa: (a) relanzar operaciones costosas ya corridas
+  (re-indexaciones, scans masivos), (b) agregar flags/switches/config que
+  nadie pidió, (c) recortar o limitar comportamiento pedido por el usuario
+  (p. ej. acortar búsquedas), (d) elegir una herramienta de verificación
+  distinta a la que el usuario nombró. NO hay umbral de tamaño: decidir que
+  un caso es "muy chico para preguntar" ES la violación. (Matar/reiniciar
+  procesos no está en esta lista porque no es pregunta: está prohibido
+  directamente, ver arriba.)
+- **"No aparece en el FE" → paso 1: verificar qué código sirve realmente el
+  dev server** (hash de bundle / timestamp / string sonda en el output).
+  Un server viejo sirviendo bundle de ayer es la causa #1 de falso "no
+  aparece". Si no se confirma fresco, simplemente informarlo — el usuario
+  decide y reinicia él; uno jamás lo reinicia.
+- **Angular 22+ signal-first es ley**: TODO código Angular (nuevo o tocado)
+  sigue la skill `droxon-angular22`: signals/input()/output()/model(),
+  zoneless y OnPush por defecto (nunca escribirlos ni revertirlos), control
+  flow nativo, Signal Forms, inject(). Ver detalles en esa skill.
 - Never `git commit`/`push`/open PRs — git delivery is the user's.
 - What the user named (component, library, exact value) is a hard constraint:
   implement exactly that; never substitute your preference.
