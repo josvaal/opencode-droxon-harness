@@ -18,7 +18,7 @@
 #       the Pi agent dir (~/.pi/agent, override with PI_CODING_AGENT_DIR):
 #         pi install <this repo>      prompts (/feature) + skills + extension
 #         pi install npm:pi-subagents subagent delegation for Pi
-#         plus defaults: pi-todo, pi-questions, @justram/pi-undo-redo,
+#         plus defaults: pi-todo, pi-questions, pi-undo-redo,
 #         pi-pigment?name=theychat, pi-mcp-adapter (best effort)
 #         AGENTS.md                   droxon orchestrator block (merged, backup)
 #         YATT + spec-kit             shared deps (same as OpenCode)
@@ -425,12 +425,11 @@ install_pi() {
       pi_install "npm:pi-todo" "pi-todo" best-effort
       echo "==> Dependencies: pi-questions (ask_questions tool; mandatory for user questions)..."
       pi_install "npm:pi-questions" "pi-questions" best-effort
-      echo "==> Dependencies: @justram/pi-undo-redo (undo/redo for Pi)..."
-      pi_install "npm:@justram/pi-undo-redo" "@justram/pi-undo-redo" best-effort
+      echo "==> Dependencies: pi-undo-redo (snapshot undo/redo; doesn't hijack tools, keeps pi-pigment rendering)..."
+      pi_install "npm:pi-undo-redo" "pi-undo-redo" best-effort
       echo "==> Dependencies: pi-pigment (Shiki rendering for diffs/commands/grep)..."
       pi_install "npm:pi-pigment" "pi-pigment" best-effort
-      echo "==> Dependencies: pi-atelier (status rail + activity sidebar for todos/subagents)..."
-      pi_install "npm:pi-atelier" "pi-atelier" best-effort
+      log "note: pi-atelier dropped from deps — its sidebar overlaps/breaks the Pi TUI."
       log "note: register the YATT MCP server with pi-mcp-adapter pointing at:"
       log "  bun run $YATT_HOME/mcp/src/server.ts --root $YATT_HOME"
     fi
@@ -449,7 +448,7 @@ install_pi() {
   echo "==> Done. Installed (Pi Agent):"
   log "Pi package: droxon-harness -> /feature prompt + droxon-orchestrator skill + droxon-verify extension"
   log "AGENTS.md: droxon orchestrator block (backup .bak-droxon)"
-  [ "$SKIP_DEPS" != "1" ] && log "deps: pi-subagents + pi-mcp-adapter + pi-todo + pi-questions + @justram/pi-undo-redo + pi-pigment + pi-atelier (best effort) + YATT ($YATT_HOME) + spec-kit"
+  [ "$SKIP_DEPS" != "1" ] && log "deps: pi-subagents + pi-mcp-adapter + pi-todo + pi-questions + pi-undo-redo + pi-pigment (best effort) + YATT ($YATT_HOME) + spec-kit (pi-atelier dropped: overlaps/breaks the Pi TUI)"
   log "grill-me skill: install-once from vendor-skills/grill-me (skipped if a copy already exists) — the harness always uses it for plan/gate interrogation, questions in plain natural language"
 
   echo
