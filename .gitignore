@@ -5,3 +5,4 @@ node_modules/
 *.bak-*
 .opencode/
 features/*/research/sources/qwen-tree.json
+.pi/
