@@ -120,6 +120,38 @@ ensure_speckit() {
 }
 
 # ----------------------------------------------------------------------------
+# Herdr sidebar integration (pi-todo-herdr)
+# ----------------------------------------------------------------------------
+ensure_herdr_sidebar() {
+  command -v herdr >/dev/null 2>&1 || { log "herdr not found; skipping sidebar integration (optional)"; return 0; }
+  local conf="$HOME/.config/herdr/config.toml"
+  [ -f "$conf" ] || { log "herdr config not found at $conf; skipping sidebar integration"; return 0; }
+  if grep -q '\$task_progress' "$conf" && grep -q '\$task' "$conf"; then
+    log "herdr sidebar already has task tokens"
+    return 0
+  fi
+  if grep -q '^\[ui.sidebar.agents\]' "$conf"; then
+    # Existing section: append the missing tokens to its rows line(s).
+    sed -i 's/^rows = \(.*\)\]/rows = \1, ["$task_progress", "$task", "$task_count"]]/' "$conf"
+  else
+    # No section yet: create it with sensible defaults + task tokens.
+    cat >>"$conf" <<'EOF'
+
+[ui.sidebar.agents]
+rows = [["state_icon", "workspace", "tab"], ["$ask", "$ask_count"], ["$task_progress", "$task", "$task_count"]]
+EOF
+  fi
+  if grep -q '\$task_progress' "$conf"; then
+    log "herdr sidebar: added \$task_progress/\$task/\$task_count tokens to $conf"
+    herdr server reload-config >/dev/null 2>&1 \
+      && log "herdr server config reloaded" \
+      || warn "could not reload herdr server; run 'herdr server reload-config' manually"
+  else
+    warn "could not patch herdr sidebar automatically; add \$task/\$task_count/\$task_progress to [ui.sidebar.agents] in $conf"
+  fi
+}
+
+# ----------------------------------------------------------------------------
 # Target: OpenCode
 # ----------------------------------------------------------------------------
 ensure_fastloop() {
@@ -435,6 +467,7 @@ install_pi() {
     fi
     echo "==> Dependencies: YATT (E2E browser verification; shared with OpenCode)..."
     ensure_yatt_repo
+    ensure_herdr_sidebar
     echo "==> Dependencies: spec-kit (optional spec scaffolding)..."
     ensure_speckit
   else
