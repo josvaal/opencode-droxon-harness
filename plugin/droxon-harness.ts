@@ -1,18 +1,27 @@
-import type { Plugin } from "@opencode-ai/plugin";
-
-// Droxon harness plugin — mechanical enforcement of the standing rules that
-// are NOT already enforced by code elsewhere (fastloop owns the typecheck gate;
-// OpenCode owns read-before-write). This plugin adds exactly one enforcement:
+// Droxon harness plugin — OpenCode v2 server plugin (format: default export
+// `{ id, setup }`; the v1 factory returning a Hooks object was removed in
+// v2.0.x and fails to load with "Plugin must export a default definition with
+// an id and an effect or setup function").
+//
+// Mechanical enforcement of the standing rules that are NOT already enforced
+// by code elsewhere (fastloop owns the typecheck gate; OpenCode owns
+// read-before-write). This plugin adds exactly one enforcement:
 //
 //   Subagent prompt hygiene: when the orchestrator spawns a subagent via the
-//   `task` tool, the harness requires project conventions and user-named
-//   constraints to travel VERBATIM in the prompt (subagents have no memory of
-//   the parent conversation). If the prompt does not mention them, we append
-//   a self-contained contract so the child cannot silently drift.
+//   `subagent` tool (formerly `task`), the harness requires project
+//   conventions and user-named constraints to travel VERBATIM in the prompt
+//   (subagents have no memory of the parent conversation). If the prompt does
+//   not mention them, we append a self-contained contract so the child cannot
+//   silently drift.
 //
-// Qwen model-family support: per-prompt family detection. ONLY detected-Qwen
+// Qwen model-family support: per-session family detection. ONLY detected-Qwen
 // sessions receive injected intelligence (system block + subagent note);
 // glm/unknown sessions keep the contract byte-identical (decision 2b).
+//
+// v1 → v2 hook mapping (v2.0.22):
+//   "chat.message"                          → event.subscribe("message.updated")
+//   "experimental.chat.system.transform"    → aisdk.hook("language") + doStream/doGenerate wrapper
+//   "tool.execute.before" (tool === "task") → tool.hook("execute.before") (tool === "subagent" | "task")
 
 type ModelFamily = "glm" | "qwen" | "unknown";
 
@@ -26,12 +35,12 @@ type FamilyModule = {
 };
 
 // The shared module is loaded dynamically because its installed location
-// depends on the deployment layout: in-repo and `pi install <repo>` resolve
+// depends on the deployment layout: in-repo and `install.sh` resolve
 // "./model-family.ts" (sibling of this file); the OpenCode installer stages
 // it under "$DEST/lib/" (OUTSIDE plugins/ — OpenCode auto-loads every file
-// in plugins/, and this is a data module, not a plugin factory). Family
-// features silently disable if no layout resolves; the REMINDER contract
-// keeps working regardless.
+// in plugins/, and this is a data module, not a plugin). Family features
+// silently disable if no layout resolves; the REMINDER contract keeps working
+// regardless.
 let familyModule: FamilyModule | null = null;
 let familyModulePromise: Promise<FamilyModule | null> | null = null;
 function loadFamilyModule(): Promise<FamilyModule | null> {
@@ -75,12 +84,10 @@ const QWEN_SUBAGENT_NOTE = [
   "- For qwen-coder models, tool-call syntax in examples uses the qwen-coder XML form: <tool_call><function=name><parameter=key>value</parameter></function></tool_call>.",
 ].join("\n");
 
-// Family per session. "chat.message" is the only per-message hook that names
-// the model; "experimental.chat.system.transform" sees the full Model (with
-// endpoint) and records too — the task-note path uses the most complete
-// signal. Keyed by sessionID; model-less messages NEVER overwrite (a missing
-// model must not flip a detected session back to unknown). The map is capped
-// to bound growth in long-lived server processes.
+// Family per session, recorded from the event stream (v1's "chat.message"
+// equivalent: user/assistant messages carry the model). Model-less messages
+// NEVER overwrite (a missing model must not flip a detected session back to
+// unknown). The map is capped to bound growth in long-lived server processes.
 const sessionFamilies = new Map<string, ModelFamily>();
 const SESSION_FAMILY_CAP = 500;
 
@@ -93,51 +100,143 @@ function recordFamily(sessionID: string | undefined, family: ModelFamily | null)
   }
 }
 
-export const DroxonHarnessPlugin: Plugin = async () => {
-  const familyMod = await loadFamilyModule();
-  return {
-    "chat.message": async (input) => {
-      if (!familyMod || !input.model) return; // no model in this message -> keep last known family
-      recordFamily(
-        input.sessionID,
-        familyMod.detectModelFamily({
-          modelID: input.model.modelID,
-          providerID: input.model.providerID,
-        }),
+// Wraps a LanguageModelV3 so every request carries the Qwen intel block as a
+// leading system message (v1's "experimental.chat.system.transform"
+// equivalent — v2 has no per-request system hook, but the language model is
+// resolved per provider+model, and family detection is model-based, so a
+// doStream/doGenerate wrapper is semantically equivalent for detected-Qwen
+// models). Idempotent: skips if a system entry already carries the marker.
+function withQwenSystemBlock(base: any, block: string): any {
+  if (!base || typeof base.doStream !== "function") return base;
+  const inject = (options: any) => {
+    try {
+      const prompt = Array.isArray(options?.prompt) ? options.prompt : [];
+      const already = prompt.some(
+        (m: any) =>
+          m?.role === "system" &&
+          typeof m?.content === "string" &&
+          m.content.includes("QWEN MODEL FAMILY INTELLIGENCE"),
       );
-    },
-    "experimental.chat.system.transform": async (input, output) => {
-      if (!familyMod) return;
-      // Experimental hook: absent in older OpenCode builds -> never called
-      // (graceful degradation); shape-defensive read because the SDK Model
-      // carries the endpoint at api.url today.
-      const model = input.model as
-        | { id?: string; providerID?: string; api?: { url?: string }; baseUrl?: string }
-        | undefined;
-      // No signal at all -> record nothing, keep the previous family.
-      if (!model || (!model.id && !model.providerID && !model.api?.url && !model.baseUrl)) return;
-      const family = familyMod.detectModelFamily({
-        modelID: model.id,
-        providerID: model.providerID,
-        baseUrl: model.api?.url ?? model.baseUrl,
-      });
-      recordFamily(input.sessionID, family);
-      if (family !== "qwen") return;
-      // Each transform call is fresh for its request; the guard only protects
-      // against a host that re-runs the transform over an already-extended list.
-      if (output.system.some((entry) => entry.includes("QWEN MODEL FAMILY INTELLIGENCE"))) return;
-      output.system.push(familyMod.familyIntelBlock("qwen"));
-    },
-    "tool.execute.before": async (input, output) => {
-      if (input.tool !== "task") return;
-      const prompt = String(output.args?.prompt ?? "");
-      if (prompt.length === 0) return; // let OpenCode's own validation handle it
-      if (prompt.includes("DROXON HARNESS CONTRACT")) return; // idempotent
-      const note =
-        familyMod && sessionFamilies.get(input.sessionID) === "qwen" ? QWEN_SUBAGENT_NOTE : "";
-      output.args.prompt = prompt + REMINDER + note;
-    },
+      if (already) return options;
+      return { ...options, prompt: [{ role: "system", content: block }, ...prompt] };
+    } catch {
+      return options;
+    }
   };
+  const wrapped: any = {
+    ...base,
+    doStream: (options: any) => base.doStream(inject(options)),
+  };
+  if (typeof base.doGenerate === "function") {
+    wrapped.doGenerate = (options: any) => base.doGenerate(inject(options));
+  }
+  return wrapped;
+}
+
+// Structural typing of the v2.0.22 setup context (only the domains this
+// plugin uses; the published .d.ts lags the shipped runtime, so no SDK type
+// imports — the file must transpile standalone inside OpenCode's bun loader).
+type Registration = { dispose?: () => Promise<void> };
+interface SetupContext {
+  tool: {
+    hook(
+      name: "execute.before" | "execute.after",
+      handler: (input: { tool: string; sessionID?: string; agent?: string; input?: any }) => unknown,
+    ): Promise<Registration>;
+  };
+  event: {
+    subscribe(handler: (event: unknown) => unknown): Promise<Registration>;
+  };
+  aisdk: {
+    hook(
+      name: "sdk" | "language",
+      handler: (input: {
+        model?: { providerID?: string; modelID?: string; id?: string; settings?: Record<string, any> };
+        sdk?: any;
+        language?: any;
+      }) => unknown,
+    ): Promise<Registration>;
+  };
+}
+export interface DroxonHarnessDefinition {
+  id: string;
+  setup: (context: SetupContext) => Promise<void>;
+}
+
+export const DroxonHarnessPlugin: DroxonHarnessDefinition = {
+  id: "droxon-harness",
+  async setup(ctx) {
+    const familyMod = await loadFamilyModule();
+
+    // (a) Record model family per session from the event stream. The decoded
+    // event is defensive-read: the runtime may deliver {type, properties} or
+    // a flattened {type, ...properties}. Handler never throws into the host.
+    await ctx.event.subscribe((raw) => {
+      try {
+        const event = raw as any;
+        if (event?.type !== "message.updated") return;
+        const props = event.properties ?? event;
+        const info = props.info;
+        if (!info || (info.role !== "user" && info.role !== "assistant")) return;
+        const model = info.model;
+        recordFamily(
+          props.sessionID ?? event.sessionID,
+          model
+            ? familyMod!.detectModelFamily({
+                modelID: model.modelID,
+                providerID: model.providerID,
+              })
+            : null, // no model in this message -> keep last known family
+        );
+      } catch {
+        // never break the host over a malformed event
+      }
+    });
+
+    // (b) Qwen system-block injection via the (cached, model-scoped) language
+    // hook. Detection is per model, which is exactly what v1's transform did.
+    await ctx.aisdk.hook("language", (input) => {
+      try {
+        if (!familyMod || !input?.model) return;
+        const model = input.model;
+        const modelID = model.modelID ?? model.id;
+        if (!modelID) return;
+        const family = familyMod.detectModelFamily({
+          modelID,
+          providerID: model.providerID,
+          baseUrl:
+            model.settings?.baseURL ??
+            model.settings?.baseUrl ??
+            model.settings?.endpoint,
+        });
+        if (family !== "qwen") return;
+        const base = input.language ?? input.sdk?.languageModel?.(modelID);
+        input.language = withQwenSystemBlock(base, familyMod.familyIntelBlock("qwen"));
+      } catch {
+        // never break the host over a hook-shape change
+      }
+    });
+
+    // (c) Subagent prompt contract. v2 renamed the tool: "subagent" (the
+    // "task" name survives only as a deprecated alias, matched defensively).
+    await ctx.tool.hook("execute.before", (hookInput) => {
+      try {
+        if (hookInput.tool !== "subagent" && hookInput.tool !== "task") return;
+        const args = hookInput.input;
+        if (!args || typeof args !== "object") return;
+        const prompt = String(args.prompt ?? "");
+        if (prompt.length === 0) return; // let OpenCode's own validation handle it
+        if (prompt.includes("DROXON HARNESS CONTRACT")) return; // idempotent
+        const note =
+          familyMod && hookInput.sessionID && sessionFamilies.get(hookInput.sessionID) === "qwen"
+            ? QWEN_SUBAGENT_NOTE
+            : "";
+        args.prompt = prompt + REMINDER + note;
+      } catch {
+        // never break the host over an args-shape change
+      }
+    });
+  },
 };
 
 export default DroxonHarnessPlugin;
