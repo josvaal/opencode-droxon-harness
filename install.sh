@@ -6,7 +6,8 @@
 #       override with OPENCODE_CONFIG_DIR):
 #         agent/*.md                Droxon-Agent + sdd-* + jd-judges
 #         command/feature.md        /feature command
-#         plugins/droxon-harness.ts task-prompt contract hook
+#         plugins/droxon-harness.ts task-prompt contract hook (OpenCode v2
+#                                   plugin format: default export { id, setup })
 #         tui-plugins/droxon-logo.tsx + tui.json registration
 #       And sets up the dependencies:
 #         - opencode-fastloop (npm plugin; completion gate)

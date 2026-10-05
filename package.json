@@ -1,7 +1,7 @@
 {
   "name": "opencode-droxon-harness",
-  "version": "1.0.0",
-  "description": "Droxon harness for OpenCode: one orchestrator agent that runs the SDD pipeline, /feature workflow, spec-kit fusion, YATT E2E verification and the fastloop completion gate. GLM & Qwen family friendly.",
+  "version": "1.1.0",
+  "description": "Droxon harness for OpenCode (v2 plugin contract): one orchestrator agent that runs the SDD pipeline, /feature workflow, spec-kit fusion, YATT E2E verification and the fastloop completion gate. GLM & Qwen family friendly.",
   "type": "module",
   "main": "plugin/droxon-harness.ts",
   "scripts": {
@@ -29,6 +29,7 @@
     "pi-package",
     "opencode",
     "opencode-plugin",
+    "opencode-v2",
     "opencode-agent",
     "agent",
     "harness",

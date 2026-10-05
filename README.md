@@ -33,7 +33,7 @@ per-model knobs live in config.
 | **sdd-\* subagents** | `agent/sdd-*.md` | Copies of the 11 SDD phase agents (init, explore, propose, research, spec, design, tasks, apply, verify, archive, onboard) so the plugin is self-contained. |
 | **jd-judges** | `agent/jd-judge-{a,b}.md` | Blind dual adversarial reviewers, launched on large/risky changes as part of the closure gate. |
 | **/feature** | `command/feature.md` | End-to-end feature workflow: YATT E2E reproduction before reading code, verbatim brief, case enumeration with a mandatory checklist, ⛔ GATE 1 (clarification) and ⛔ GATE 2 (per-case closure), spec-kit fusion, per-layer verification, short mode with an uncompressable GATE 2. |
-| **Prompt-contract hook** | `plugin/droxon-harness.ts` | Appends a self-contained contract to every `task` subagent prompt (conventions verbatim, faithful reporting, complete final message) — subagents have no parent memory, so the contract travels with them. |
+| **Prompt-contract hook** | `plugin/droxon-harness.ts` | Appends a self-contained contract to every `subagent` tool prompt (conventions verbatim, faithful reporting, complete final message) — subagents have no parent memory, so the contract travels with them. OpenCode v2 plugin format (default export `{ id, setup }`); requires OpenCode ≥ 2.0. |
 | **TUI logo** | `tui/droxon-logo.tsx` | Replaces the OpenCode home logo with the Droxon ASCII art (compact fallback on small terminals). |
 | **Pi package** | `pi/` | The same harness for [Pi Agent](https://pi.dev): `/feature` prompt template, `droxon-orchestrator` skill, `droxon-verify` extension (real-build completion gate), orchestrator AGENTS.md block. Installed by `install.sh --target pi` via `pi install` + `npm:pi-subagents`. |
 
@@ -90,7 +90,7 @@ into the Pi agent dir (`~/.pi/agent`, override with `PI_CODING_AGENT_DIR`):
   in `package.json`): the `/feature` prompt template, the
   `droxon-orchestrator` skill, and the `droxon-harness` extension load in place.
 - **`pi install npm:pi-subagents`** — subagent delegation for Pi (the
-  equivalent of OpenCode's `task` tool), plus `npm:pi-mcp-adapter` (best
+  equivalent of OpenCode's `subagent` tool), plus `npm:pi-mcp-adapter` (best
   effort) so the YATT MCP server can be exposed to Pi.
 - **AGENTS.md** — the orchestrator core is merged into `~/.pi/agent/AGENTS.md`
   (existing content preserved; backup `AGENTS.md.bak-droxon`).

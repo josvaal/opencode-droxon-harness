@@ -196,10 +196,12 @@ Detection and injection are mechanical, per prompt, and silent:
 - `plugin/model-family.ts` holds the detection table (model-ID patterns first — `/qwen/i`,
   `/glm/i` — then endpoint: DashScope/ModelStudio → Qwen, `z.ai` → GLM) and the distilled
   family blocks. Qwen specifics: [`qwen-notes.md`](qwen-notes.md).
-- OpenCode: the plugin captures the family per session (`chat.message`) and appends the Qwen
-  block to the system prompt (`experimental.chat.system.transform`); the `task` subagent
-  contract gains a short Qwen note only in Qwen sessions. GLM/unknown sessions: behavior
-  byte-identical to before — nothing is injected.
+- OpenCode (v2 plugin contract): the plugin records the family per session from the event
+  stream (`event.subscribe` on `message.updated`) and appends the Qwen block to the model
+  request via the AI-SDK `language` hook (`aisdk.hook("language")` + a `doStream`/`doGenerate`
+  wrapper that prepends it as a system message); the `subagent` tool contract gains a short
+  Qwen note only in Qwen sessions. GLM/unknown sessions: behavior byte-identical to before —
+  nothing is injected. Requires OpenCode ≥ 2.0 (the v1 hook API is gone).
 - Pi: the extension appends the same block in `before_agent_start` when the session model is
   Qwen (`ctx.model`); otherwise it returns undefined and Pi's prompt is untouched.
 - Auth/connection setup is out of scope for the installer: it ships no endpoints or keys.
