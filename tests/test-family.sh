@@ -36,9 +36,12 @@ t_family_spec() {
 }
 
 t_family_sources() {
-  echo "== T-FAMILY-SOURCES: injection wiring + packaging =="
-  check_grep "plugin detects per message (chat.message)" 'chat.message' "$ROOT/plugin/droxon-harness.ts"
-  check_grep "plugin injects via system transform" 'experimental.chat.system.transform' "$ROOT/plugin/droxon-harness.ts"
+  echo "== T-FAMILY-SOURCES: injection wiring + packaging (OpenCode v2 contract) =="
+  check_grep "plugin is a v2 definition ({id, setup})" 'setup' "$ROOT/plugin/droxon-harness.ts"
+  check_grep "plugin records family via the event stream (v1 chat.message)" 'event.subscribe' "$ROOT/plugin/droxon-harness.ts"
+  check_grep "plugin injects via the aisdk language hook (v1 system.transform)" 'aisdk.hook' "$ROOT/plugin/droxon-harness.ts"
+  check_grep "plugin guards the subagent prompt via tool.hook (v1 tool.execute.before)" 'tool.hook' "$ROOT/plugin/droxon-harness.ts"
+  check_grep "plugin matches the v2 subagent tool (task kept as alias)" 'subagent' "$ROOT/plugin/droxon-harness.ts"
   check_grep "pi extension hooks before_agent_start" 'before_agent_start' "$ROOT/pi/extensions/droxon-harness.ts"
   check_grep "plugin imports the shared family module" 'model-family.ts' "$ROOT/plugin/droxon-harness.ts"
   check_grep "pi extension imports the shared family module" 'model-family.ts' "$ROOT/pi/extensions/droxon-harness.ts"

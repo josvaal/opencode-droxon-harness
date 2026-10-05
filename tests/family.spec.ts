@@ -108,128 +108,244 @@ describe("statelessness (C6)", () => {
 
 // Hook-level wiring (C1/C3/C5 regression-zero contract): the OpenCode plugin
 // is unit-testable under bun — its SDK import is type-only, erased at runtime.
-describe("opencode plugin hooks", () => {
+// v2 contract: default export is a DEFINITION ({ id, setup }); hooks register
+// through the setup context domains (event.subscribe, tool.hook,
+// aisdk.hook("language")). This harness stubs those domains and captures the
+// registrations.
+describe("opencode plugin (v2 setup contract)", () => {
   const REMINDER_MARK = "DROXON HARNESS CONTRACT";
   const NOTE_MARK = "QWEN SUBAGENT NOTE";
+  const BLOCK_MARK = "QWEN MODEL FAMILY INTELLIGENCE";
 
-  async function makeHooks() {
+  type Handler = (input: any) => unknown;
+
+  async function makeWiring() {
     const mod = await import("../plugin/droxon-harness.ts");
-    const hooks = await mod.DroxonHarnessPlugin();
-    return hooks as Record<
-      string,
-      (input: any, output: any) => Promise<void>
-    >;
+    const toolHooks = new Map<string, Handler>();
+    const eventHandlers: Handler[] = [];
+    const aisdkHooks = new Map<string, Handler>();
+    const registration = { dispose: async () => {} };
+    const ctx = {
+      tool: {
+        hook: async (name: string, handler: Handler) => {
+          toolHooks.set(name, handler);
+          return registration;
+        },
+      },
+      event: {
+        subscribe: async (handler: Handler) => {
+          eventHandlers.push(handler);
+          return registration;
+        },
+      },
+      aisdk: {
+        hook: async (name: string, handler: Handler) => {
+          aisdkHooks.set(name, handler);
+          return registration;
+        },
+      },
+    };
+    await mod.default.setup(ctx as any);
+    return { mod, toolHooks, eventHandlers, aisdkHooks };
   }
 
-  async function taskPrompt(
-    hooks: Record<string, (input: any, output: any) => Promise<void>>,
+  // v1 "chat.message" equivalent: a user message event carrying the model.
+  async function recordMessage(
+    wiring: Awaited<ReturnType<typeof makeWiring>>,
     sessionID: string,
-  ): Promise<string> {
-    const output = { args: { prompt: "BASE" } };
-    await hooks["tool.execute.before"]({ tool: "task", sessionID, callID: "c1" }, output);
-    return String(output.args.prompt);
+    model?: { providerID: string; modelID: string },
+  ) {
+    for (const handler of wiring.eventHandlers) {
+      await handler({
+        type: "message.updated",
+        properties: {
+          sessionID,
+          info: model
+            ? { role: "user", sessionID, model }
+            : { role: "user", sessionID },
+        },
+      });
+    }
   }
 
-  test("qwen session: task prompt gets contract + qwen note", async () => {
-    const hooks = await makeHooks();
-    await hooks["chat.message"](
-      { sessionID: "s-qwen", model: { providerID: "dashscope", modelID: "qwen3-coder-plus" } },
-      { message: {}, parts: [] },
-    );
-    const prompt = await taskPrompt(hooks, "s-qwen");
+  // v1 "tool.execute.before" equivalent: the subagent tool's execute.before
+  // hook receives {tool, sessionID, input} with a mutable args object.
+  async function subagentPrompt(
+    wiring: Awaited<ReturnType<typeof makeWiring>>,
+    sessionID: string,
+    tool = "subagent",
+  ): Promise<string> {
+    const hookInput = { tool, sessionID, input: { prompt: "BASE" } };
+    await wiring.toolHooks.get("execute.before")!(hookInput);
+    return String(hookInput.input.prompt);
+  }
+
+  test("definition shape satisfies the v2 loader ({id, setup})", async () => {
+    const { mod } = await makeWiring();
+    expect(typeof mod.default).toBe("object");
+    expect(mod.default.id).toBe("droxon-harness");
+    expect(typeof mod.default.setup).toBe("function");
+  });
+
+  test("qwen session: subagent prompt gets contract + qwen note", async () => {
+    const wiring = await makeWiring();
+    await recordMessage(wiring, "s-qwen", {
+      providerID: "dashscope",
+      modelID: "qwen3-coder-plus",
+    });
+    const prompt = await subagentPrompt(wiring, "s-qwen");
     expect(prompt.startsWith("BASE")).toBe(true);
     expect(prompt).toContain(REMINDER_MARK);
     expect(prompt).toContain(NOTE_MARK);
   });
 
   test("glm and unknown sessions: byte-identical contract, no note (C3/C4)", async () => {
-    const hooks = await makeHooks();
-    await hooks["chat.message"](
-      { sessionID: "s-glm", model: { providerID: "zai", modelID: "glm-5.3-flash" } },
-      { message: {}, parts: [] },
-    );
-    await hooks["chat.message"](
-      { sessionID: "s-unk", model: { providerID: "openai", modelID: "kimi-k2.5" } },
-      { message: {}, parts: [] },
-    );
-    const glmPrompt = await taskPrompt(hooks, "s-glm");
-    const unkPrompt = await taskPrompt(hooks, "s-unk");
+    const wiring = await makeWiring();
+    await recordMessage(wiring, "s-glm", {
+      providerID: "zai",
+      modelID: "glm-5.3-flash",
+    });
+    await recordMessage(wiring, "s-unk", {
+      providerID: "openai",
+      modelID: "kimi-k2.5",
+    });
+    const glmPrompt = await subagentPrompt(wiring, "s-glm");
+    const unkPrompt = await subagentPrompt(wiring, "s-unk");
     expect(glmPrompt).toBe(unkPrompt); // byte-identical
     expect(glmPrompt.startsWith("BASE")).toBe(true);
     expect(glmPrompt).toContain(REMINDER_MARK);
     expect(glmPrompt).not.toContain(NOTE_MARK);
     // qwen prompt is exactly the glm prompt plus the note suffix (C5):
     // first, an unregistered session yields the bare contract...
-    const bare = await taskPrompt(hooks, "s-qwen-2");
+    const bare = await subagentPrompt(wiring, "s-qwen-2");
     expect(bare).toBe(glmPrompt); // no session family recorded yet
     // ...then, once the qwen model is seen, the note is appended after it.
-    await hooks["chat.message"](
-      { sessionID: "s-qwen-2", model: { providerID: "dashscope", modelID: "qwen3-coder-plus" } },
-      { message: {}, parts: [] },
-    );
-    const qwenAfter = await taskPrompt(hooks, "s-qwen-2");
+    await recordMessage(wiring, "s-qwen-2", {
+      providerID: "dashscope",
+      modelID: "qwen3-coder-plus",
+    });
+    const qwenAfter = await subagentPrompt(wiring, "s-qwen-2");
     expect(qwenAfter.startsWith(glmPrompt)).toBe(true);
     expect(qwenAfter).toContain(NOTE_MARK);
   });
 
   test("model-less message never flips a detected session (judge B major-adjacent guard)", async () => {
-    const hooks = await makeHooks();
-    await hooks["chat.message"](
-      { sessionID: "s-flip", model: { providerID: "dashscope", modelID: "qwen3-coder-plus" } },
-      { message: {}, parts: [] },
-    );
-    await hooks["chat.message"]({ sessionID: "s-flip" }, { message: {}, parts: [] });
-    const prompt = await taskPrompt(hooks, "s-flip");
+    const wiring = await makeWiring();
+    await recordMessage(wiring, "s-flip", {
+      providerID: "dashscope",
+      modelID: "qwen3-coder-plus",
+    });
+    await recordMessage(wiring, "s-flip"); // no model -> must not overwrite
+    const prompt = await subagentPrompt(wiring, "s-flip");
     expect(prompt).toContain(NOTE_MARK); // still qwen
   });
 
-  test("transform injects exactly one block for qwen and is re-run safe; glm untouched", async () => {
-    const hooks = await makeHooks();
-    const out = { system: ["base"] };
-    await hooks["experimental.chat.system.transform"](
-      {
-        sessionID: "s-t1",
-        model: { id: "qwen3-coder-plus", providerID: "dashscope", api: { url: "https://dashscope.aliyuncs.com/v1" } },
-      },
-      out,
-    );
-    expect(out.system.length).toBe(2);
-    expect(out.system[1]).toContain("QWEN MODEL FAMILY INTELLIGENCE");
-    await hooks["experimental.chat.system.transform"](
-      {
-        sessionID: "s-t1",
-        model: { id: "qwen3-coder-plus", providerID: "dashscope", api: { url: "https://dashscope.aliyuncs.com/v1" } },
-      },
-      out,
-    );
-    expect(out.system.length).toBe(2); // no duplicate
-    const untouched = { system: ["base"] };
-    await hooks["experimental.chat.system.transform"](
-      { sessionID: "s-t2", model: { id: "glm-5.3-flash", providerID: "zai" } },
-      untouched,
-    );
-    expect(untouched.system).toEqual(["base"]);
+  test("tool match covers 'subagent' and the deprecated 'task' alias", async () => {
+    const wiring = await makeWiring();
+    const viaSubagent = await subagentPrompt(wiring, "s-tool", "subagent");
+    const viaTask = await subagentPrompt(wiring, "s-tool-2", "task");
+    expect(viaSubagent).toContain(REMINDER_MARK);
+    expect(viaTask).toContain(REMINDER_MARK);
+    // other tools are untouched
+    const hookInput = { tool: "bash", sessionID: "s-tool-3", input: { command: "ls" } };
+    await wiring.toolHooks.get("execute.before")!(hookInput);
+    expect(hookInput.input.command).toBe("ls");
+    expect(hookInput.input).not.toHaveProperty("prompt");
   });
 
-  test("transform with full model upgrades the task-note signal (endpoint-only qwen)", async () => {
-    const hooks = await makeHooks();
-    // chat.message sees only providerID+modelID (silent ID); the transform's
-    // full model (with endpoint) must upgrade the recorded family.
-    await hooks["chat.message"](
-      { sessionID: "s-endpoint", model: { providerID: "custom-relay", modelID: "my-model" } },
-      { message: {}, parts: [] },
-    );
-    let prompt = await taskPrompt(hooks, "s-endpoint");
-    expect(prompt).not.toContain(NOTE_MARK);
-    await hooks["experimental.chat.system.transform"](
-      {
-        sessionID: "s-endpoint",
-        model: { id: "my-model", providerID: "custom-relay", baseUrl: "https://dashscope.aliyuncs.com/compatible-mode/v1" },
+  // v1 "experimental.chat.system.transform" equivalent: the aisdk "language"
+  // hook replaces input.language with a wrapper; the wrapper's doStream /
+  // doGenerate prepend the Qwen block as a system message (idempotent).
+  function makeFakeLanguageModel() {
+    const captured: { stream: any[]; generate: any[] } = { stream: [], generate: [] };
+    const base = {
+      specificationVersion: "v3",
+      provider: "dashscope",
+      modelId: "qwen3-coder-plus",
+      supportedUrls: {},
+      doStream: async (options: any) => {
+        captured.stream.push(options);
+        return { stream: [] };
       },
-      { system: ["base"] },
-    );
-    prompt = await taskPrompt(hooks, "s-endpoint");
-    expect(prompt).toContain(NOTE_MARK);
+      doGenerate: async (options: any) => {
+        captured.generate.push(options);
+        return {};
+      },
+    };
+    return { base, captured };
+  }
+
+  test("language hook wraps qwen models and injects exactly one block, re-run safe", async () => {
+    const wiring = await makeWiring();
+    const hook = wiring.aisdkHooks.get("language")!;
+    const { base, captured } = makeFakeLanguageModel();
+    const input: any = {
+      model: { providerID: "dashscope", modelID: "qwen3-coder-plus" },
+      sdk: {},
+      language: base,
+    };
+    await hook(input);
+    expect(input.language).not.toBe(base); // wrapped
+    const first = { prompt: [{ role: "user", content: "hi" }] };
+    await input.language.doStream(first);
+    expect(captured.stream[0].prompt.length).toBe(2);
+    expect(captured.stream[0].prompt[0].role).toBe("system");
+    expect(captured.stream[0].prompt[0].content).toContain(BLOCK_MARK);
+    // re-run safe: a prompt already carrying the block is not duplicated
+    await input.language.doStream({
+      prompt: [{ role: "system", content: `x ${BLOCK_MARK} y` }, { role: "user", content: "hi" }],
+    });
+    expect(captured.stream[1].prompt.length).toBe(2);
+    // doGenerate is wrapped too
+    await input.language.doGenerate({ prompt: [{ role: "user", content: "hi" }] });
+    expect(captured.generate[0].prompt[0].role).toBe("system");
+  });
+
+  test("language hook leaves glm/unknown models untouched (regression zero)", async () => {
+    const wiring = await makeWiring();
+    const hook = wiring.aisdkHooks.get("language")!;
+    const glm = makeFakeLanguageModel();
+    const inputGlm: any = {
+      model: { providerID: "zai", modelID: "glm-5.3-flash" },
+      sdk: {},
+      language: glm.base,
+    };
+    await hook(inputGlm);
+    expect(inputGlm.language).toBe(glm.base);
+
+    const unk = makeFakeLanguageModel();
+    const inputUnk: any = {
+      model: { providerID: "openai", modelID: "kimi-k2.5" },
+      sdk: {},
+      language: unk.base,
+    };
+    await hook(inputUnk);
+    expect(inputUnk.language).toBe(unk.base);
+  });
+
+  test("endpoint signal (settings.baseURL) upgrades injection for endpoint-only qwen", async () => {
+    const wiring = await makeWiring();
+    const hook = wiring.aisdkHooks.get("language")!;
+    const { base, captured } = makeFakeLanguageModel();
+    const input: any = {
+      // modelID carries no family signal; the endpoint does (DashScope -> qwen)
+      model: {
+        providerID: "custom-relay",
+        modelID: "my-model",
+        settings: { baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1" },
+      },
+      sdk: {},
+      language: base,
+    };
+    await hook(input);
+    await input.language.doStream({ prompt: [{ role: "user", content: "hi" }] });
+    expect(captured.stream[0].prompt[0].content).toContain(BLOCK_MARK);
+    // v2 limitation (no sessionID in the language hook): the session-family
+    // map is NOT upgraded by the language hook, so the subagent NOTE for an
+    // endpoint-only qwen stays absent — graceful degradation, never a crash.
+    const prompt = await subagentPrompt(wiring, "s-endpoint");
+    expect(prompt).toContain(REMINDER_MARK);
+    expect(prompt).not.toContain(NOTE_MARK);
   });
 });
 
